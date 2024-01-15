@@ -1,0 +1,3 @@
+import pyhydrate
+
+help(pyhydrate)

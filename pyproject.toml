@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = 'pyhydrate'
+version = '1.0.0'
+description = 'Python class hydration from json, yaml, dicts, and lists.'
+readme = "readme.md"
+authors = [
+    {name = 'Michael Flanigan', email = '7891356+mjfii@users.noreply.github.com'}
+]
+license = {file = 'license'}
+dependencies = [
+    'typing-extensions',
+    'pyyaml'
+]
+classifiers = [
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Information Technology',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent'
+]
+requires-python = '>=3.8'
