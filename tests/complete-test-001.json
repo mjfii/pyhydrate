@@ -1,0 +1,66 @@
+{
+    "vers-ion": "2.0",
+    "routeKey": "$default",
+    "rawPath": "/",
+    "rawQueryString": "contract_path=raw/komodo/patient_enrollments/.contract&template_path=common/ddl/create_table.sql.j2",
+    "headers": {
+        "x-amzn-lambda-proxying-cell": "0",
+        "content-length": "0",
+        "x-amzn-tls-version": "TLSv1.2",
+        "x-amz-date": "20240111T231443Z",
+        "x-forwarded-proto": "https",
+        "postman-token": "72586501-6f1c-4c26-8c11-fac46c393bb5",
+        "x-forwarded-port": "443",
+        "x-forwarded-for": "174.51.68.111",
+        "x-amzn-lambda-proxy-auth": "HmacSHA256, SignedHeaders=Authorization;x-amzn-lambda-forwarded-client-ip;x-amzn-lambda-forwarded-host;x-amzn-lambda-proxying-cell, Signature=Dy8Z120g4KsF0bkZKUhINcTfDB+dPezoiDWzx5p8rXI=",
+        "accept": "*/*",
+        "x-amzn-lambda-forwarded-client-ip": "174.51.68.111",
+        "x-amzn-tls-cipher-suite": "ECDHE-RSA-AES128-GCM-SHA256",
+        "x-amzn-trace-id": "Self=1-65a07664-44101b376f1e022a0287ad23;Root=1-65a07664-1dc1cb4f6b0c0bc729f78166",
+        "host": "p3hleqrl2qbulyxa36vkefr3wa0xcnwx.cell-1-lambda-url.us-east-1.on.aws",
+        "content-type": "application/json",
+        "x-amzn-lambda-forwarded-host": "p3hleqrl2qbulyxa36vkefr3wa0xcnwx.lambda-url.us-east-1.on.aws",
+        "accept-encoding": "gzip, deflate, br",
+        "user-agent": "PostmanRuntime/7.36.0"
+    },
+    "queryStringParameters": {
+        "contract_path": "raw/komodo/patient_enrollments/.contract",
+        "template_path": "common/ddl/create_table.sql.j2"
+    },
+    "requestContext": {
+        "accountId": "272472831328",
+        "apiId": "p3hleqrl2qbulyxa36vkefr3wa0xcnwx",
+        "authorizer": {
+            "iam": {
+                "accessKey": "AKIAT64FFOVQAPUE564B",
+                "accountId": "272472831328",
+                "callerId": "AIDAT64FFOVQAW36WZFZQ",
+                "cognitoIdentity": null,
+                "principalOrgId": "o-wn528edfb5",
+                "userArn": "arn:aws:iam::272472831328:user/captech-data",
+                "userId": "AIDAT64FFOVQAW36WZFZQ"
+            },
+            "xy": [
+              {
+                "color": "blue"
+              },
+              2
+            ]
+        },
+        "domainName": "p3hleqrl2qbulyxa36vkefr3wa0xcnwx.cell-1-lambda-url.us-east-1.on.aws",
+        "domainPrefix": "p3hleqrl2qbulyxa36vkefr3wa0xcnwx",
+        "http": {
+            "method": "GET",
+            "path": "/",
+            "protocol": "HTTP/1.1",
+            "sourceIp": "174.51.68.111",
+            "userAgent": "PostmanRuntime/7.36.0"
+        },
+        "requestId": "e3200237-34b1-4dd0-a67a-b08479f6ccde",
+        "routeKey": "$default",
+        "stage": "$default",
+        "time": "11/Jan/2024:23:14:44 +0000",
+        "timeEpoch": 1705014884051
+    },
+    "isBase64Encoded": false
+}

@@ -4,5 +4,7 @@ twine
 pypirc
 build
 installer
+
+# src dependencies
 typing_extensions
 pyyaml
