@@ -19,7 +19,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout Working Action
+      uses: actions/checkout@v3
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
@@ -28,6 +29,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install build
+        pip install -r requirements.txt
     - name: Run tests
       run: |
         python -m unittest tests/dict_read_tests.py
