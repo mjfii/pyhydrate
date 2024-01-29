@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload Python Package
+name: Push Python Package to PyPi
 
 on:
   push:
@@ -17,9 +17,7 @@ permissions:
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
@@ -31,7 +29,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install build
     - name: Run tests
-      run: pytest tests/
+      run: |
+        python -m unittest tests/dict_read_tests.py
     - name: Build package
       run: python -m build
     - name: Publish package
