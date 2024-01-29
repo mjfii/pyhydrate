@@ -1,1 +1,1 @@
-from dict_read_tests import DictReadMethods
+from .dict_read_tests import DictReadMethods
