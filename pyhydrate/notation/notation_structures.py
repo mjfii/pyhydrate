@@ -1,13 +1,7 @@
 from typing import Union
-from typing import List
-from typing import Tuple
-
-# from .notation_print import notation_print
 from typing_extensions import Self
 from .notation_base import NotationBase
 from .notation_value import NotationValue
-
-import json
 import warnings
 
 
