@@ -1,0 +1,13 @@
+{
+  "queryStringParameters": {
+    "TestString": "test string",
+    "testInteger": 1,
+    "test_Float": 2.345,
+    "Test_BOOL": true
+  },
+  "requestContext": {
+    "http": {
+      "method": "GET"
+    }
+  }
+}

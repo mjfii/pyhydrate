@@ -23,7 +23,8 @@ class NotationBase(NotationRepresentation):
     # r'(?=[A-Z])' - pascal case without number separation
     # r'(?<!^)(?=[A-Z])' - camel case without number separation
     # r'(?<!^)(?=[A-Z])|(?<=[a-z])(?=\d)'  # - camel case with number separation
-    _cast_pattern = re.compile(r'(?<!^)(?=[A-Z])|(?<=-)(?=[a-z])|(?<=[a-z])(?=\d)')
+    # r'(?<!^)(?=[A-Z])|(?<=-)(?=[a-z])|(?<=[a-z])(?=\d)'
+    _cast_pattern = re.compile(r'(?<!\d)(?=\d)|(?<=\d)(?!\d)|(?<=[a-z])(?=[A-Z])')
     _indent: int = 3
     _depth: int = 1
 
@@ -74,8 +75,9 @@ class NotationBase(NotationRepresentation):
         :param string:
         :return:
         """
-        _kebab_clean: str = string.replace('-', '_')
-        return self._cast_pattern.sub('_', _kebab_clean).lower()
+        _kebab_clean: str = string.replace('-', '_').replace(' ', '_')
+        _parsed = self._cast_pattern.sub('_', _kebab_clean)
+        return re.sub(r'_+', r'_', _parsed).lower().strip('_')
 
 
 if __name__ == '__main__':
