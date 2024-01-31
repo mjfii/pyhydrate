@@ -1,5 +1,5 @@
 
-name: Push Python Package to PyPI
+name: Run Tests in Pre-Prod
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  run-tests:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Working Action
