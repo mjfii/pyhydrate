@@ -1,5 +1,5 @@
 
-name: Push Python Package to PyPI
+name: deploy-prod
 
 on:
   push:
