@@ -13,12 +13,19 @@ _payload = {
     }
 }
 
-y = pyhy.PyHydrate(_payload)
-x = y.request_context.http()
-print(x)
+y = pyhy.PyHydrate(_payload, debug=False)
+x = y.request_context('element')
 
-z = y.request_context.http.method()
-print(z)
+print(y)
 
-idk = y.request_context.http.method.x()
-print(idk)
+# print(x, '\n')
+#
+# z = y.request_context.http.method('type')
+# print(z, '\n')
+#
+# idk = y.query_string_parameters
+# print(idk, '\n')
+
+
+# TODO: move required items to note_rep
+# TODO: build out the map logic
