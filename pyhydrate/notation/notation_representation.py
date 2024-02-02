@@ -5,9 +5,9 @@ import json
 
 class NotationRepresentation(object):
     # CONSTANTS
-
     _repr_key: str = 'PyHydrate'
     _idk: str = r'¯\_(ツ)_/¯'
+    _debug: bool = False
 
     def __repr__(self) -> Union[str, None]:
         try:
