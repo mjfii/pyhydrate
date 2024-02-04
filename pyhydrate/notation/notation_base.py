@@ -26,12 +26,13 @@ class NotationBase(NotationRepresentation):
     depth, etc. Child classes will inherit this to reduce code duplication.
 
     Attributes:
-        _raw_value: The original untouched value.
-        _cleaned_value: The processed value after type checking.
-        _hydrated_value: The wrapped Notation object.
-        _cast_pattern (str): Regex pattern for formatting object/dict keys.
-        _kwargs: Additional options passed during initialization.
-        _depth (int): Recursion depth.
+        _raw_value (str): The original untouched value.
+        _cleaned_value (str): The processed value after type checking.
+        _hydrated_value (str): The wrapped Notation object.
+        _cast_pattern (Pattern[Any]): Regex raw string pattern for formatting
+        object/dict keys.
+        _kwargs (dict): Additional options passed during initialization.
+        _depth (int): Recursion depth of wrapper class.
     """
 
     # CLASS CONSTANTS
@@ -73,25 +74,32 @@ class NotationBase(NotationRepresentation):
         # TODO: handle None
 
     # INTERNAL METHODS
-    def _cast_key(self, string: str) -> Union[str, None]:
+    def _cast_key(self, string: str) -> str:
         """
         Format keys to be lowercase and underscore separated.
 
         Parameters:
-            string (str):
+            string (str): The object/dict key that is to be
+            restated as lower case snake formatting.
+
         Returns:
-            str: asdf
+            str: A new key value to be used with dot notation.
         """
         _kebab_clean: str = string.replace('-', '_').replace(' ', '_')
         _parsed = self._cast_pattern.sub('_', _kebab_clean)
         return re.sub(r'_+', r'_', _parsed).lower().strip('_')
 
-    def _print_debug(self, request: str, request_value: Union[str, int], stop: bool = False) -> None:
+    def _print_debug(self, request: str, request_value: Union[str, int], stop: bool = False):
         """
         Print debug info about the object.
 
-        Returns:
-            str:
+        Parameters:
+            request (str): The request type that is trying to access the
+            e.g. 'Call', 'Get', or 'Slice'.
+            request_value (str, int): The attribute key or index slice
+            used to access the underlying value.
+            stop (bool): Used to stop printing, even if `debug` is True.
+            Used primarily for internal purposes.
         """
 
         _component_type: Union[str, None] = None
