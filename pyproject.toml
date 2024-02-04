@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = 'pyhydrate'
 version = '1.0.4'
-description = 'For JFDI data structure access via dot notation, a Python class hydration from json, yaml, dicts, and lists.'
+description = 'A JFDI approach that hydrates a Python class to allow dot notation access to the data structures.'
 readme = "readme.md"
 authors = [
     {name = 'Michael Flanigan', email = '7891356+mjfii@users.noreply.github.com'}

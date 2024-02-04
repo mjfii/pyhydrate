@@ -31,7 +31,7 @@ class NotationObject(NotationBase):
             _hydrated: dict = {}
 
             for _k, _v in value.items():
-                _casted_key = self.cast_key(_k)
+                _casted_key = self._cast_key(_k)
 
                 if isinstance(_v, dict):
                     _hydrated[_casted_key] = NotationObject(_v, self._depth, **kwargs)
@@ -56,7 +56,6 @@ class NotationObject(NotationBase):
 
     def __getitem__(self, index: int):
         self._print_debug('Slice', index)
-        # if isinstance(self._hydrated_value, dict):
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
 
