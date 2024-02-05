@@ -35,6 +35,8 @@ class NotationBase(NotationRepresentation):
         _depth (int): Recursion depth of wrapper class.
     """
 
+    # TODO: add __int__, __bool__, and __float__ logic.
+
     # CLASS CONSTANTS
     _source_key: str = '__SOURCE_KEY__'
     _cleaned_key: str = '__CLEANED_KEY__'
