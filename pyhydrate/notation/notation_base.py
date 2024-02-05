@@ -53,11 +53,11 @@ class NotationBase(NotationRepresentation):
     # EXTERNAL METHODS
     def yaml(self) -> Union[str, None]:
         """
-        Serialize the value to YAML format.
+        Serialize the value to YAML format. Returns The YAML string if value is
+        dict/list, else the `element` value of the NotationPrimitive.
 
         Returns:
-            str: The YAML string if value is dict/list, else the `element`
-                 value of the NotationPrimitive.
+            Union[str, None]
         """
         if isinstance(self._value, dict) or isinstance(self._value, list):
             return yaml.dump(self._value, sort_keys=False, Dumper=NotationDumper).rstrip()
@@ -67,10 +67,11 @@ class NotationBase(NotationRepresentation):
 
     def json(self) -> Union[str, None]:
         """
-        Serialize the value to JSON format.
+        Serialize the value to JSON format. Returns the JSON string if value is
+        dict/list, else None.
 
         Returns:
-            str: The JSON string if value is dict/list, else None.
+            str
         """
         return json.dumps(self._value, indent=self._indent)
         # TODO: handle None
@@ -85,13 +86,13 @@ class NotationBase(NotationRepresentation):
             restated as lower case snake formatting.
 
         Returns:
-            str: A new key value to be used with dot notation.
+            str
         """
         _kebab_clean: str = string.replace('-', '_').replace(' ', '_')
         _parsed = self._cast_pattern.sub('_', _kebab_clean)
         return re.sub(r'_+', r'_', _parsed).lower().strip('_')
 
-    def _print_debug(self, request: str, request_value: Union[str, int], stop: bool = False):
+    def _print_debug(self, request: str, request_value: Union[str, int], stop: bool = False) -> None:
         """
         Print debug info about the object.
 
@@ -102,6 +103,9 @@ class NotationBase(NotationRepresentation):
             used to access the underlying value.
             stop (bool): Used to stop printing, even if `debug` is True.
             Used primarily for internal purposes.
+
+        Returns:
+            None
         """
 
         _component_type: Union[str, None] = None
@@ -154,7 +158,7 @@ class NotationBase(NotationRepresentation):
             **kwargs: Additional options.
 
         Returns:
-            dict, list, str, int, float, bool, type, None: Requested value, element, structure, or type.
+            Union[dict, list, str, int, float, bool, type, None]
         """
         #
         _stop: bool = kwargs.get('stop', False)
@@ -184,13 +188,13 @@ class NotationBase(NotationRepresentation):
 
     # INTERNAL READ-ONLY PROPERTIES
     @property
-    def _element(self) -> Union[dict, None]:
+    def _element(self) -> dict:
         """
         The dict representation of the structure or primitive. There is one
         key and one value. The <key> is the type, and <value> is the value.
 
-        Returns
-            dict: {type: structure | primitive}
+        Returns:
+            dict {type: structure | primitive}
         """
         return {self._type.__name__: self._value}
 
@@ -200,7 +204,7 @@ class NotationBase(NotationRepresentation):
         The cleaned value(s), i.e. keys are converted to lower case snake.
 
         Returns:
-            str: the value with cleaned object keys.
+            Union[dict, list, None]
         """
         return self._cleaned_value
 
@@ -210,7 +214,7 @@ class NotationBase(NotationRepresentation):
         The requested value's (structure or primitive) type.
 
         Returns:
-            type: dict, list, str, int, float, bool, NoneType
+            type
         """
         return type(self._value)
 
@@ -220,7 +224,7 @@ class NotationBase(NotationRepresentation):
         TBD
 
         Returns:
-            dict, list: TBD
+            TBD
         """
         return None
 

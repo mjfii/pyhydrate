@@ -37,12 +37,12 @@ class NotationRepresentation(object):
     _debug: bool = False
     _indent: int = 3
 
-    def __repr__(self) -> Union[str, None]:
+    def __repr__(self) -> str:
         """
-        Implement __repr__ formatting.
+        Implement customized `__repr__` formatting and representation.
 
         Returns:
-            str: The customized string representation.
+            str
         """
 
         # Try to get the raw value from the object
@@ -51,7 +51,8 @@ class NotationRepresentation(object):
         except AttributeError:
             return f"{self._repr_key}(None)"
 
-        # if
+        # Try to get the raw value from withing the structure object
+        # TODO: is this necessary?
         if not _working_value:
             try:
                 _working_value = self.__dict__.get('_structure').__dict__.get('_raw_value', None)

@@ -16,9 +16,12 @@ class NotationDumper(yaml.Dumper):
     withing the YAML string.
     """
 
-    def increase_indent(self, flow=False, *args, **kwargs):
+    def increase_indent(self, flow=False, *args, **kwargs) -> None:
         """
         Increase indentation on dump of lists.
+
+        Returns:
+            None
         """
         return super().increase_indent(flow=flow, indentless=False)
 

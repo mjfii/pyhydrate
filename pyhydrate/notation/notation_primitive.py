@@ -33,7 +33,7 @@ class NotationPrimitive(NotationBase):
     # CLASS VARIABLES
     _primitives: List[type] = [str, int, float, bool, type(None)]
 
-    def __init__(self, value: Union[str, int, float, bool, None], depth: int, **kwargs):
+    def __init__(self, value: Union[str, int, float, bool, None], depth: int, **kwargs) -> None:
         """
         Initialize with the primitive value to wrap.
 
@@ -44,6 +44,9 @@ class NotationPrimitive(NotationBase):
 
         Raises:
             Warning: If value is not a primitive type.
+
+        Returns:
+            None
         """
         # set the local kwargs variable
         self._kwargs = kwargs
@@ -66,22 +69,22 @@ class NotationPrimitive(NotationBase):
 
     def __getattr__(self, key: str) -> Self:
         """
-        Primitive values do not have attributes
+        Primitive values do not have attributes. Returns a wrapper of
+        NoneType/None to allow graceful failed access.
 
         Returns:
-            NotationPrimitive(None): A wrapper of NoneType/None to allow
-            graceful failed access.
+            NotationPrimitive(None):
         """
         self._print_debug('Get', key)
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
     def __getitem__(self, index) -> Self:
         """
-        Primitive values do not support indexing/index slicing.
+        Primitive values do not support indexing/index slicing. Returns a
+        wrapper of NoneType/None to allow graceful failed access.
 
         Returns:
-            NotationPrimitive(None): A wrapper of NoneType/None to allow
-            graceful failed access.
+            NotationPrimitive(None):
         """
         self._print_debug('Slice', index)
         return NotationPrimitive(None, self._depth, **self._kwargs)
