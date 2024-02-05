@@ -1,3 +1,14 @@
+"""
+Provides the core NotationObject and NotationArray classes.
+
+This module defines the two key classes used to represent nested
+dict and list structures in the `notation` library.
+
+NotationObject wraps a dict structure containing additional
+NotationObjects, NotationArrays, and NotationPrimitives.
+
+NotationArray wraps a list structure with the same nested elements.
+"""
 from typing import Union
 from typing_extensions import Self
 from .notation_base import NotationBase
@@ -7,16 +18,23 @@ import warnings
 
 class NotationObject(NotationBase):
     """
+    Class for representing nested dict/object structures.
 
+    NotationObject wraps a dict to provide access to child elements
+    using attribute and item access. Children can be other objects,
+    arrays, or primitives.
     """
 
-    def __init__(self, value: dict, depth: int, **kwargs):
+    def __init__(self, value: dict, depth: int, **kwargs) -> None:
+        """
+        Initialize with the raw dict and recursion depth.
+
+        Parameters:
+            value (dict):
+            depth (int):
+            kwargs (dict):
         """
 
-        :param value:
-        :param depth:
-        :param kwargs:
-        """
         # set the local kwargs variable
         self._kwargs = kwargs
 
@@ -50,25 +68,49 @@ class NotationObject(NotationBase):
                              f"`None` value and `NoneType` returned instead.")
             warnings.warn(_warning)
 
-    def __getattr__(self, key: str):
+    def __getattr__(self, key: str) -> Union[Self, u'NotationArray', NotationPrimitive]:
+        """
+         Get a child element by attribute name.
+
+         Parameters:
+            key (str):
+
+        Returns:
+            Union[NotationObject, NotationArray, NotationPrimitive]
+         """
         self._print_debug('Get', key)
         return self._hydrated_value.get(key, NotationPrimitive(None, self._depth, **self._kwargs))
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> NotationPrimitive:
+        """
+        Not implemented for objects.
+
+        Parameters:
+            index (int):
+
+        Returns:
+            NotationPrimitive(None)
+        """
         self._print_debug('Slice', index)
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
 
 class NotationArray(NotationBase):
     """
+    Class for representing nested list structures.
+
+    NotationArray wraps a list with nested object/array/primitive
+    elements similarly to NotationObject.
     """
 
-    def __init__(self, value: list, depth: int, **kwargs):
+    def __init__(self, value: list, depth: int, **kwargs) -> None:
         """
+        Initialize with the raw list value.
 
-        :param value:
-        :param depth:
-        :param kwargs:
+        Parameters:
+            value (list):
+            depth (int):
+            kwargs (dict):
         """
 
         # set the local kwargs variable
@@ -98,14 +140,29 @@ class NotationArray(NotationBase):
                              f"`None` value and `NoneType` returned instead.")
             warnings.warn(_warning)
 
-    def __getattr__(self, key: str):
+    def __getattr__(self, key: str) -> NotationPrimitive:
+        """
+        Not implemented for arrays.
 
+        Parameters:
+            key (str):
+
+        Returns:
+            NotationPrimitive
+        """
         self._print_debug('Get', key)
-
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
-    def __getitem__(self, index: int) -> Union[Self, NotationObject, NotationPrimitive]:
+    def __getitem__(self, index: int) -> Union[NotationObject, Self, NotationPrimitive]:
+        """
+        Get child element by index.
 
+        Parameters:
+            index (int):
+
+        Returns:
+            Union[NotationObject, NotationArray, NotationPrimitive]
+        """
         self._print_debug('Slice', index)
 
         try:
