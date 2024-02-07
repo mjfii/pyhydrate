@@ -1,11 +1,11 @@
 """
-Provides custom repr formatting for Notation classes.
+Provides custom `repr` formatting for Notation classes.
 
 This module contains the NotationRepresentation class which gives a
 customized string representation for NotationObjects, NotationArrays,
 and other classes that inherit from it.
 
-The goal is to standardize the repr output for enhanced debugging
+The goal is to standardize the `repr` output for enhanced debugging
 and inspection of nested Notation data structures.
 """
 from typing import Union
@@ -15,7 +15,7 @@ import json
 
 class NotationRepresentation(object):
     """
-    Base class providing custom repr formatting.
+    Base class providing custom `repr` formatting.
 
     The __repr__ method is implemented to give a detailed summary of
     the object including its class name, value, and type information.
@@ -25,8 +25,8 @@ class NotationRepresentation(object):
     Attributes:
         _repr_key (str): Name of object class.
         _idk (str): Raw string value if real value is missing.
-        _debug (bool): Whether to print debug statements.
-        _indent (int): Spacing for pretty printing.
+        _debug (bool): Whether to print debug statements - from kwargs.
+        _indent (int): Spacing for pretty printing - from kwargs.
     """
 
     # CLASS CONSTANTS
@@ -72,7 +72,7 @@ class NotationRepresentation(object):
             # return an indented string
             # TODO: this is incomplete, the structure should be quoted and escaped
             elif isinstance(_working_value, dict) or isinstance(_working_value, list):
-                _return_value:str = textwrap.indent(json.dumps(_working_value, indent=3), 3 * ' ')
+                _return_value: str = textwrap.indent(json.dumps(_working_value, indent=3), 3 * ' ')
                 return f"{self._repr_key}(\n{_return_value}\n)"
             # the primitive or structure is not handled, a warning should exist,
             # return and unknown representation
@@ -81,3 +81,7 @@ class NotationRepresentation(object):
         # a known representation does not exist, return None/unknown
         else:
             return f"{self._repr_key}(None)"
+
+
+if __name__ == '__main__':
+    pass
