@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = 'pyhydrate'
-version = '1.0.4'
+version = '1.0.5'
 description = 'A JFDI approach that hydrates a Python class to allow dot notation access to the data structures.'
 readme = "readme.md"
 authors = [
@@ -25,7 +25,7 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Intended Audience :: Developers',
     'Intended Audience :: Information Technology',
-    'License :: OSI Approved :: MIT License',
+    'License :: OSI Approved :: Apache License Version 2.0',
     'Operating System :: OS Independent'
 ]
 requires-python = '>=3.8'

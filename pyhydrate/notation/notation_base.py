@@ -162,12 +162,16 @@ class NotationBase(NotationRepresentation):
         # get the "call type" to return the correct result
         try:
             self._call = args[0]
+        # if no "call type" was provided, use `value`
         except IndexError:
             self._call = 'value'
         finally:
+            # if no "call type" is None, also use `value`
+            if not self._call:
+                self._call = 'value'
             self._print_debug('Call', self._call, _stop)
 
-        #
+        # based on the "call type", return the requested data
         if self._call == 'value':
             return self._value
         elif self._call == 'element':

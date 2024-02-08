@@ -15,6 +15,8 @@ _doc = {
 
 _demo = PyHy(_doc, debug=True)
 
-print('\n', _demo.level_one.level_two, '\n')
+print(_demo.level_one.level_two)
 
-print('\n', _demo.level_one.level_two('element'))
+print(_demo.level_one.level_two('element'))
+
+print(_demo.level_one.level_four)
