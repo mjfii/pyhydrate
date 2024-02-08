@@ -1,6 +1,6 @@
 ## PyHydrate
-[![license](https://img.shields.io/github/license/mjfii/pyhydrate.svg)](https://github.com/mjdii/pyhydrate/blob/main/license)
-[![pypi](https://img.shields.io/pypi/v/pyhydrate.svg)](https://pypi.python.org/pypi/pyhtdrate)
+[![license](https://img.shields.io/github/license/mjfii/pyhydrate.svg)](https://github.com/mjfii/pyhydrate/blob/main/license)
+[![pypi](https://img.shields.io/pypi/v/pyhydrate.svg)](https://pypi.python.org/pypi/pyhydrate)
 [![deploy](https://github.com/mjfii/pyhydrate/workflows/deploy-prod/badge.svg?event=push)](https://github.com/mjfii/pyhydrate/actions?query=workflow%3Adeploy-prod+event%3Apush+branch%3Amain)
 [![downloads](https://static.pepy.tech/badge/pyhydrate/month)](https://pepy.tech/project/pyhydrate)
 [![versions](https://img.shields.io/pypi/pyversions/pyhydrate.svg)](https://github.com/mjfii/pyhydrate)
@@ -21,6 +21,8 @@ pip install -U pyhydrate
 ```
 
 ### A Simple Example
+Load any Python variable, and the class hydration will
+ensue.  Access the data via dot notation.
 ```python
 from pyhydrate import PyHydrate as PyHy
 
@@ -39,9 +41,52 @@ _doc = {
 
 _demo = PyHy(_doc, debug=True)
 
-print('\n', _demo.level_one.level_two, '\n')
+print(_demo.level_one.level_two)
 
-print('\n', _demo.level_one.level_two('element'))
+# debug output
+# >>> Root :: <PyHydrate>
+#   >>> Object :: Get == level_one :: Depth == 1
+#      >>> Object :: Get == level_two :: Depth == 2
+
+# print output (yaml)
+# level_3:
+#   test_string: test string
+#   test_integer: 1
+#   test_float: 2.345
+#   test_bool: true
+```
+
+Then access any level of the hydration by making a call to the class. 
+Valid values are: <empty >, 'value', 'element', 'type', 'depth', 'map',
+'json', and 'yaml'.  See nomenclature below.
+
+```python
+print(_demo.level_one.level_two('element'))
+
+# debug output
+# >>> Root :: <PyHydrate>
+#    >>> Object :: Get == level_one :: Depth == 1
+#       >>> Object :: Get == level_two :: Depth == 2
+#          >>> Object :: Call == element :: Depth == 3
+
+# print output (dict)
+# {'dict': {'level_3': {'test_string': 'test string', 'test_integer': 1, 'test_float': 2.345, 'test_bool': True}}}
+```
+
+If a data point does not exist via expressed notation, an unknown/None/null 
+value is returned.
+
+```python
+print(_demo.level_one.level_four)
+
+# debug output
+# >>> Root :: <PyHydrate>
+#    >>> Object :: Get == level_one :: Depth == 1
+#       >>> Object :: Get == level_four :: Depth == 2
+#          >>> Primitive :: Call == value :: Depth == 3 :: Output == None
+
+# print output (yaml)
+# NoneType: null
 ```
 
 ### Nomenclature
@@ -64,7 +109,7 @@ the documentation, and within
   of the transformations in the class.
   - Source: The raw provided document, either a Structure or a Primitive.
   - Cleaned: Similar value to the source, but with the keys in the Objects
-    cleaned to be casted as lower case snake.
+    cleaned to be cast as lower case snake.
   - Hydrated: A collection of nested classes representing Structures and
     Primitives that allows the dot notation access and graceful failures.
 - Element: A single dict output representation, where the key is represented 
