@@ -1,0 +1,12 @@
+{
+  "level-one": {
+    "levelTWO": {
+      "Level3": {
+        "TestString": "test string",
+        "testInteger": 1,
+        "test_Float": 2.345,
+        "Test_BOOL": true
+      }
+    }
+  }
+}

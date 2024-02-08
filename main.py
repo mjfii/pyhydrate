@@ -1,24 +1,20 @@
-import pyhydrate as pyhy
+from pyhydrate import PyHydrate as PyHy
 
-_payload = {
-    'queryStringParameters': {
-        'someStringValue': 'string value 1',
-        'aLogicalValue': True,
-        'myValue': 12345.6
-    },
-    'requestContext': {
-        'http': {
-            'method': 'GET'
-        }
+_doc = {
+  "level-one": {
+    "levelTWO": {
+      "Level3": {
+        "TestString": "test string",
+        "testInteger": 1,
+        "test_Float": 2.345,
+        "Test_BOOL": True
+      }
     }
+  }
 }
 
-y = pyhy.PyHydrate(_payload)
-x = y.request_context.http()
-print(x)
+_demo = PyHy(_doc, debug=True)
 
-z = y.request_context.http.method()
-print(z)
+print('\n', _demo.level_one.level_two, '\n')
 
-idk = y.request_context.http.method.x()
-print(idk)
+print('\n', _demo.level_one.level_two('element'))
