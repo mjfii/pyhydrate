@@ -1,31 +1,20 @@
-import pyhydrate as pyhy
+from pyhydrate import PyHydrate as PyHy
 
-_payload = {
-    'queryStringParameters': {
-        'someStringValue': 'string value 1',
-        'aLogicalValue': True,
-        'myValue': 12345.6
-    },
-    'requestContext': {
-        'http': {
-            'method': 'GET'
-        }
+_doc = {
+  "level-one": {
+    "levelTWO": {
+      "Level3": {
+        "TestString": "test string",
+        "testInteger": 1,
+        "test_Float": 2.345,
+        "Test_BOOL": True
+      }
     }
+  }
 }
 
-y = pyhy.PyHydrate(_payload, debug=False)
-x = y.request_context('element')
+_demo = PyHy(_doc, debug=True)
 
-print(y)
+print('\n', _demo.level_one.level_two, '\n')
 
-# print(x, '\n')
-#
-# z = y.request_context.http.method('type')
-# print(z, '\n')
-#
-# idk = y.query_string_parameters
-# print(idk, '\n')
-
-
-# TODO: move required items to note_rep
-# TODO: build out the map logic
+print('\n', _demo.level_one.level_two('element'))

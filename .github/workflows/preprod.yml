@@ -27,3 +27,5 @@ jobs:
       run: |
         python -m unittest tests/dict_get_tests.py
         python -m unittest tests/list_get_tests.py
+        python -m unittest tests/call_tests.py
+        python -m unittest tests/primitive_get_tests.py
