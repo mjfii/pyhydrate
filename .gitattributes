@@ -1,0 +1,48 @@
+# Markdown linguistics
+*.md linguist-detectable=true
+*.md linguist-language=Markdown
+*.markdown linguist-detectable=true
+*.markdown linguist-language=Markdown
+
+# YAML linguistics
+*.yml linguist-detectable=true
+*.yml linguist-language=YAML
+*.yaml linguist-detectable=true
+*.yaml linguist-language=YAML
+
+# Docker linguistics
+Dockerfile linguist-detectable=true
+Dockerfile linguist-language=Dockerfile
+docker-compose.yml linguist-detectable=true
+docker-compose.yml linguist-language=Dockerfile
+
+# GitHub linguistics
+*.gitkeep linguist-detectable=true
+*.gitkeep linguist-language=Git Config
+
+# Python linguistics
+*.py linguist-detectable=true
+*.py linguist-language=Python
+requirements.txt linguist-detectable=true
+requirements.txt linguist-language=Python
+
+# Binary detection
+*.png binary
+*.pdf binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.flv binary
+*.fla binary
+*.swf binary
+*.gz binary
+*.zip binary
+*.7z binary
+*.ttf binary
+
+# https://github.com/github-linguist/linguist/blob/master/lib/linguist/languages.yml
+# https://raw.githubusercontent.com/github-linguist/linguist/master/lib/linguist/languages.yml
