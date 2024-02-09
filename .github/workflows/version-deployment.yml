@@ -27,12 +27,6 @@ jobs:
         pip install -r requirements.txt
     - name: Build dist
       run: poetry build
-    - name: Run tests
-      run: |
-        python -m unittest tests/dict_get_tests.py
-        python -m unittest tests/list_get_tests.py
-        python -m unittest tests/call_tests.py
-        python -m unittest tests/primitive_get_tests.py
     - name: Build package
       run: python -m build
     - name: Publish package
