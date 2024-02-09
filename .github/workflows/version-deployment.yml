@@ -8,14 +8,15 @@ on:
 permissions:
   contents: read
 
+env:
+  RELEASE_VERSION: ${{ github.event.release.tag_name }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Working Action
       uses: actions/checkout@v4
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -25,13 +26,26 @@ jobs:
         python -m pip install --upgrade pip
         pip install build
         pip install -r requirements.txt
-    - name: Build dist
-      run: poetry build
+
+    - name: asdf
+      run: |
+        import toml
+        import os
+
+        _ver = '$RELEASE_VERSION'
+
+        with open('pyproject.toml', 'r') as f:
+            config = toml.load(f)
+            config['project']['version'] = _ver.strip('v')
+        
+        with open('pyproject.toml', 'w') as f:
+            toml.dump(config, f)
+            print(f"Project Version updated to {_ver} in pyproject.toml file.")
+
     - name: Build package
       run: python -m build
     - name: Publish package
-      env:
-        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        poetry config pypi-token.pypi $PYPI_API_TOKEN
-        poetry publish --build
+      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
