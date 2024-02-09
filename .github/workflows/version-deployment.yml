@@ -42,7 +42,6 @@ jobs:
         
         with open('pyproject.toml', 'w') as f:
             toml.dump(config, f)
-            print(f"Project Version updated to {_ver} in pyproject.toml file.")
         """
     - name: Build package
       run: python -m build
