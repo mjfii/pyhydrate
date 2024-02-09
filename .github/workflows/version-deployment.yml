@@ -1,5 +1,5 @@
 
-name: deploy-prod
+name: CD
 
 on:
   release:
