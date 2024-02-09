@@ -2,7 +2,7 @@
 [![license](https://img.shields.io/github/license/mjfii/pyhydrate.svg)](https://github.com/mjfii/pyhydrate/blob/main/license)
 [![pypi](https://img.shields.io/pypi/v/pyhydrate.svg)](https://pypi.python.org/pypi/pyhydrate)
 [![ci](https://github.com/mjfii/pyhydrate/actions/workflows/prod-tests.yml/badge.svg)](https://github.com/mjfii/pyhydrate/actions/workflows/prod-tests.yml)
-
+[![cd](https://github.com/mjfii/pyhydrate/actions/workflows/version-deployment.yml/badge.svg)](https://github.com/mjfii/pyhydrate/actions/workflows/version-deployment.yml)
 [![downloads](https://static.pepy.tech/badge/pyhydrate/month)](https://pepy.tech/project/pyhydrate)
 [![versions](https://img.shields.io/pypi/pyversions/pyhydrate.svg)](https://github.com/mjfii/pyhydrate)
 
