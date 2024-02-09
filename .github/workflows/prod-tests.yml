@@ -3,7 +3,7 @@ name: Run Tests in Pre-Prod
 
 on:
   push:
-    branches: [stage]
+    branches: [main]
 
 permissions:
   contents: read
