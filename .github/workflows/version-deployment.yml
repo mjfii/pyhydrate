@@ -2,8 +2,8 @@
 name: deploy-prod
 
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -14,6 +14,8 @@ jobs:
     steps:
     - name: Checkout Working Action
       uses: actions/checkout@v4
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -23,16 +25,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install build
         pip install -r requirements.txt
-    - name: Run tests
-      run: |
-        python -m unittest tests/dict_get_tests.py
-        python -m unittest tests/list_get_tests.py
-        python -m unittest tests/call_tests.py
-        python -m unittest tests/primitive_get_tests.py
+    - name: Build dist
+      run: poetry build
     - name: Build package
       run: python -m build
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      env:
+        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        poetry config pypi-token.pypi $PYPI_API_TOKEN
+        poetry publish --build

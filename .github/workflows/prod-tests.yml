@@ -1,0 +1,31 @@
+
+name: main-tests
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Working Action
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build
+        pip install -r requirements.txt
+    - name: Run tests
+      run: |
+        python -m unittest tests/dict_get_tests.py
+        python -m unittest tests/list_get_tests.py
+        python -m unittest tests/call_tests.py
+        python -m unittest tests/primitive_get_tests.py

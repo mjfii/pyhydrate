@@ -1,5 +1,5 @@
 
-name: Run Tests in Pre-Prod
+name: stage-tests
 
 on:
   push:

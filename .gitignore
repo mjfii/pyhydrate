@@ -153,6 +153,7 @@ profiles.yml
 # custom
 scratch/
 .scratch/
+scratch.py
 temp/
 .temp/
 tmp/
