@@ -1,9 +1,9 @@
 
-name: main-tests
+name: stage-tests
 
 on:
   push:
-    branches: [main]
+    branches: [stage]
 
 permissions:
   contents: read
