@@ -44,27 +44,27 @@ class TestErrorHandling(unittest.TestCase):
             warnings.simplefilter("always")
             _obj = NotationObject("not a dict", 0)
 
-            self.assertEqual(len(w), 1)
-            self.assertIsInstance(w[0].category(), TypeConversionWarning)
-            self.assertIn("NotationObject initialization", str(w[0].message))
+            assert len(w) == 1
+            assert isinstance(w[0].category(), TypeConversionWarning)
+            assert "NotationObject initialization" in str(w[0].message)
 
         # Test NotationArray with invalid type
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             _arr = NotationArray("not a list", 0)
 
-            self.assertEqual(len(w), 1)
-            self.assertIsInstance(w[0].category(), TypeConversionWarning)
-            self.assertIn("NotationArray initialization", str(w[0].message))
+            assert len(w) == 1
+            assert isinstance(w[0].category(), TypeConversionWarning)
+            assert "NotationArray initialization" in str(w[0].message)
 
         # Test NotationPrimitive with invalid type
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             _prim = NotationPrimitive({"not": "primitive"}, 0)
 
-            self.assertEqual(len(w), 1)
-            self.assertIsInstance(w[0].category(), TypeConversionWarning)
-            self.assertIn("NotationPrimitive initialization", str(w[0].message))
+            assert len(w) == 1
+            assert isinstance(w[0].category(), TypeConversionWarning)
+            assert "NotationPrimitive initialization" in str(w[0].message)
 
     def test_api_usage_warnings(self) -> None:
         """Test APIUsageWarning is raised for invalid API usage."""
@@ -76,12 +76,12 @@ class TestErrorHandling(unittest.TestCase):
             warnings.simplefilter("always")
             result = hydrated("invalid_call_type")
 
-            self.assertEqual(len(w), 1)
-            self.assertIsInstance(w[0].category(), APIUsageWarning)
-            self.assertIn("Call type", str(w[0].message))
-            self.assertIn("invalid_call_type", str(w[0].message))
-            self.assertIn("Valid options are:", str(w[0].message))
-            self.assertIsNone(result)
+            assert len(w) == 1
+            assert isinstance(w[0].category(), APIUsageWarning)
+            assert "Call type" in str(w[0].message)
+            assert "invalid_call_type" in str(w[0].message)
+            assert "Valid options are:" in str(w[0].message)
+            assert result is None
 
     def test_warning_inheritance(self) -> None:
         """Test that all custom warnings inherit from PyHydrateWarning."""
@@ -99,9 +99,9 @@ class TestErrorHandling(unittest.TestCase):
             hydrated("invalid_call")
 
             # All warnings should be catchable as PyHydrateWarning
-            self.assertEqual(len(w), 4)
+            assert len(w) == 4
             for warning in w:
-                self.assertTrue(issubclass(warning.category, PyHydrateWarning))
+                assert issubclass(warning.category, PyHydrateWarning)
 
     def test_debug_logging(self) -> None:
         """Test that debug mode generates appropriate log messages."""
@@ -113,7 +113,7 @@ class TestErrorHandling(unittest.TestCase):
         result = hydrated.nested.value()
 
         # Verify the result is still correct (debug logging is complex, just test functionality)
-        self.assertEqual(result, 42)
+        assert result == 42
 
     def test_error_handling_preserves_functionality(self) -> None:
         """Test that error handling doesn't break normal functionality."""
@@ -129,17 +129,17 @@ class TestErrorHandling(unittest.TestCase):
         hydrated = PyHydrate(data)
 
         # Test normal access patterns
-        self.assertEqual(hydrated.string(), "test")
-        self.assertEqual(hydrated.number(), 42)
-        self.assertEqual(hydrated.array[0](), 1)
-        self.assertEqual(hydrated.nested.deep(), "value")
+        assert hydrated.string() == "test"
+        assert hydrated.number() == 42
+        assert hydrated.array[0]() == 1
+        assert hydrated.nested.deep() == "value"
 
         # Test call types
-        self.assertEqual(hydrated.string("type"), str)
+        assert hydrated.string("type") is str
         element_result = hydrated.number("element")
-        self.assertEqual(element_result["int"], 42)
-        self.assertIn("test", hydrated.string("json"))
-        self.assertIn("test", hydrated.string("yaml"))
+        assert element_result["int"] == 42
+        assert "test" in hydrated.string("json")
+        assert "test" in hydrated.string("yaml")
 
     def test_graceful_error_handling(self) -> None:
         """Test that invalid access returns None primitives gracefully."""
@@ -149,13 +149,13 @@ class TestErrorHandling(unittest.TestCase):
 
         # Invalid attribute access should return None primitive
         invalid_access = hydrated.nonexistent
-        self.assertIsInstance(invalid_access, NotationPrimitive)
-        self.assertIsNone(invalid_access())
+        assert isinstance(invalid_access, NotationPrimitive)
+        assert invalid_access() is None
 
         # Invalid index access should return None primitive
         invalid_index = hydrated[999]
-        self.assertIsInstance(invalid_index, NotationPrimitive)
-        self.assertIsNone(invalid_index())
+        assert isinstance(invalid_index, NotationPrimitive)
+        assert invalid_index() is None
 
     def test_warning_filtering(self) -> None:
         """Test that warnings can be filtered by type."""
@@ -173,8 +173,8 @@ class TestErrorHandling(unittest.TestCase):
             hydrated("invalid_call")
 
             # Only the APIUsageWarning should be recorded
-            self.assertEqual(len(w), 1)
-            self.assertIsInstance(w[0].category(), APIUsageWarning)
+            assert len(w) == 1
+            assert isinstance(w[0].category(), APIUsageWarning)
 
     def test_exception_formatting(self) -> None:
         """Test that warning messages are properly formatted and informative."""
@@ -188,10 +188,10 @@ class TestErrorHandling(unittest.TestCase):
             warning_message = str(w[0].message)
 
             # Check that the message contains key information
-            self.assertIn("NotationObject initialization", warning_message)
-            self.assertIn("expected dict", warning_message)
-            self.assertIn("got int", warning_message)
-            self.assertIn("dictionary", warning_message)  # suggestion
+            assert "NotationObject initialization" in warning_message
+            assert "expected dict" in warning_message
+            assert "got int" in warning_message
+            assert "dictionary" in warning_message  # suggestion
 
     def test_logging_levels(self) -> None:
         """Test that debug logging respects log levels."""
@@ -203,7 +203,7 @@ class TestErrorHandling(unittest.TestCase):
         result = hydrated.test()
 
         # The result should still be correct regardless of logging
-        self.assertEqual(result, "value")
+        assert result == "value"
 
 
 if __name__ == "__main__":

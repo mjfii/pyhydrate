@@ -1,9 +1,19 @@
 import contextlib
 import json
+import sys
 from json import JSONDecodeError
 from typing import Any, Union
 
 import yaml
+
+# Handle TOML imports for different Python versions
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        tomllib = None
 
 from .notation import (
     NotationArray,
@@ -41,6 +51,11 @@ class PyHydrate(NotationBase):
         if isinstance(source_value, str):
             with contextlib.suppress(JSONDecodeError):
                 source_value = json.loads(source_value)
+
+        # if we still have a string, try to translate as if it were toml
+        if isinstance(source_value, str) and tomllib is not None:
+            with contextlib.suppress((tomllib.TOMLDecodeError, ValueError)):
+                source_value = tomllib.loads(source_value)
 
         # if we still have a string, try to translate as if it were yaml
         if isinstance(source_value, str):
