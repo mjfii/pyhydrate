@@ -7,7 +7,6 @@ bool, and None so they can be handled consistently in Notation structures.
 It inherits from NotationBase to get common functionality.
 """
 
-import warnings
 from typing import Any, ClassVar, List, Union
 
 from typing_extensions import Self
@@ -67,11 +66,15 @@ class NotationPrimitive(NotationBase):
             self._raw_value = value
         else:
             self._raw_value = None
-            _warning: str = (
-                f"The `{self.__class__.__name__}` class does not support type '{type(value).__name__}'. "
-                f"`None` value and `NoneType` returned instead."
+            from ..error_handling import handle_type_conversion_error
+
+            handle_type_conversion_error(
+                value=value,
+                target_type="primitive",
+                operation=f"{self.__class__.__name__} initialization",
+                suggestion="Provide a primitive value (str, int, float, bool, None)",
+                debug=kwargs.get("debug", False),
             )
-            warnings.warn(_warning, stacklevel=2)
 
     def __getattr__(self, key: str) -> Self:
         """

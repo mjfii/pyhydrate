@@ -10,7 +10,6 @@ NotationObjects, NotationArrays, and NotationPrimitives.
 NotationArray wraps a list structure with the same nested elements.
 """
 
-import warnings
 from typing import TYPE_CHECKING, Any, Union
 
 from typing_extensions import Self
@@ -63,11 +62,15 @@ class NotationObject(NotationBase):
             self._raw_value = None
             self._hydrated_cache = {}
             self._key_mappings = {}
-            _warning: str = (
-                f"The `{self.__class__.__name__}` class does not support type '{type(value).__name__}'. "
-                f"`None` value and `NoneType` returned instead."
+            from ..error_handling import handle_type_conversion_error
+
+            handle_type_conversion_error(
+                value=value,
+                target_type=dict,
+                operation=f"{self.__class__.__name__} initialization",
+                suggestion="Provide a dictionary or dict-like object",
+                debug=kwargs.get("debug", False),
             )
-            warnings.warn(_warning, stacklevel=2)
 
     def __getattr__(
         self, key: str
@@ -199,11 +202,15 @@ class NotationArray(NotationBase):
         else:
             self._raw_value = None
             self._hydrated_cache = {}
-            _warning: str = (
-                f"The `{self.__class__.__name__}` class does not support type '{type(value).__name__}'. "
-                f"`None` value and `NoneType` returned instead."
+            from ..error_handling import handle_type_conversion_error
+
+            handle_type_conversion_error(
+                value=value,
+                target_type=list,
+                operation=f"{self.__class__.__name__} initialization",
+                suggestion="Provide a list or list-like object",
+                debug=kwargs.get("debug", False),
             )
-            warnings.warn(_warning, stacklevel=2)
 
     def _get_cleaned_value(self) -> Union[list, None]:
         """

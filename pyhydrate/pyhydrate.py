@@ -20,7 +20,14 @@ class PyHydrate(NotationBase):
     # INTERNAL METHODS
     def _print_root(self) -> None:
         if self._debug:
-            print(f">>> Root :: <{self.__class__.__name__}>")
+            from .error_handling import setup_logger
+
+            logger = setup_logger(
+                f"{self.__class__.__module__}.{self.__class__.__name__}", debug=True
+            )
+            logger.debug(
+                f"Root access: {self.__class__.__name__} -> {type(self._raw_value).__name__}"
+            )
 
     # MAGIC METHODS
     def __init__(
@@ -74,19 +81,16 @@ class PyHydrate(NotationBase):
     def __getattr__(
         self, key: str
     ) -> Union[NotationArray, NotationObject, NotationPrimitive, None]:
-        self._print_root()
         return getattr(self._structure, key)
 
     def __getitem__(
         self, index: Union[int, None]
     ) -> Union[NotationArray, NotationObject, NotationPrimitive, None]:
-        self._print_root()
         return self._structure[index]
 
     def __call__(
         self, *args: Any
     ) -> Union[dict, list, str, int, float, bool, type, None]:
-        self._print_root()
         try:
             return self._structure(args[0])
         except IndexError:

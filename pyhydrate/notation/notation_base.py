@@ -11,7 +11,6 @@ Child classes inherit from NotationBase to get this base functionality.
 import json
 import re
 import textwrap
-import warnings
 from typing import Any, Pattern, Union
 
 import yaml
@@ -113,6 +112,8 @@ class NotationBase(object):
         _output: Union[str, None] = None
 
         if self._debug and not stop:
+            from ..error_handling import setup_logger
+
             if self._type is dict:
                 _component_type = "Object"
                 _output = ""
@@ -123,12 +124,13 @@ class NotationBase(object):
                 _component_type = "Primitive"
                 _output = f" :: Output == {self._value}"
 
-            _print_value = (
-                f"{'   ' * self._depth}>>> {_component_type} :: "
-                f"{request} == {request_value} :: Depth == {self._depth}"
-                f"{_output}"
+            logger = setup_logger(
+                f"{self.__class__.__module__}.{self.__class__.__name__}", debug=True
             )
-            print(_print_value)
+            logger.debug(
+                f"{'   ' * self._depth}>>> {_component_type} :: "
+                f"{request} == {request_value} :: Depth == {self._depth}{_output}"
+            )
 
     # MAGIC METHODS
     def __str__(self) -> str:
@@ -312,12 +314,15 @@ class NotationBase(object):
         if self._call == "yaml":
             return self._yaml
         # Invalid call type - issue warning and return None
+        from ..error_handling import handle_api_usage_error
+
         valid_calls = ["value", "element", "type", "depth", "map", "json", "yaml"]
-        _warning: str = (
-            f"Invalid call type '{self._call}'. "
-            f"Valid options are: {', '.join(valid_calls)}"
+        handle_api_usage_error(
+            operation="Call type",
+            provided_value=self._call,
+            valid_options=valid_calls,
+            debug=self._debug,
         )
-        warnings.warn(_warning, stacklevel=2)
         return None
 
     # INTERNAL READ-ONLY PROPERTIES
