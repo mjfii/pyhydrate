@@ -7,12 +7,13 @@ checking, recursion depth tracking, etc.
 
 Child classes inherit from NotationBase to get this base functionality.
 """
-from typing import Union
-from typing import Pattern
-from typing import Any
+
 import json
-import yaml
 import re
+from typing import Any, Pattern, Union
+
+import yaml
+
 from .notation_dumper import NotationDumper
 from .notation_representation import NotationRepresentation
 
@@ -38,21 +39,21 @@ class NotationBase(NotationRepresentation):
     # TODO: add __int__, __bool__, and __float__ logic.
 
     # CLASS CONSTANTS
-    _source_key: str = '__SOURCE_KEY__'
-    _cleaned_key: str = '__CLEANED_KEY__'
-    _hydrated_key: str = '__HYDRATED_KEY__'
+    _source_key: str = "__SOURCE_KEY__"
+    _cleaned_key: str = "__CLEANED_KEY__"
+    _hydrated_key: str = "__HYDRATED_KEY__"
 
-    r'''
+    r"""
     This regex uses lookaheads and lookbehinds to match 3 different cases:
-        - (?<!\d)(?=\d) - Matches positions that are preceded by a non-digit 
-                          and followed by a digit. This will match between a 
+        - (?<!\d)(?=\d) - Matches positions that are preceded by a non-digit
+                          and followed by a digit. This will match between a
                           non-digit and a digit character.
-        - (?<=\d)(?!\d) - Matches positions that are preceded by a digit and 
-                          followed by a non-digit. This will match between a 
+        - (?<=\d)(?!\d) - Matches positions that are preceded by a digit and
+                          followed by a non-digit. This will match between a
                           digit and a non-digit character.
-        - (?<=[a-z])(?=[A-Z]) - Matches positions that are preceded by a 
-                                lowercase letter and followed by an uppercase 
-                                letter. This will match between a lowercase 
+        - (?<=[a-z])(?=[A-Z]) - Matches positions that are preceded by a
+                                lowercase letter and followed by an uppercase
+                                letter. This will match between a lowercase
                                 and uppercase letter.
 
     So in summary, this regex will match:
@@ -60,10 +61,12 @@ class NotationBase(NotationRepresentation):
         - Between a digit and non-digit character
         - Between a lowercase and uppercase letter
 
-    It uses lookarounds to match the positions between the specified characters 
+    It uses lookarounds to match the positions between the specified characters
     without including those characters in the match.
-    '''
-    _cast_pattern: Pattern[Any] = re.compile(r'(?<!\d)(?=\d)|(?<=\d)(?!\d)|(?<=[a-z])(?=[A-Z])')
+    """
+    _cast_pattern: Pattern[Any] = re.compile(
+        r"(?<!\d)(?=\d)|(?<=\d)(?!\d)|(?<=[a-z])(?=[A-Z])"
+    )
 
     # CLASS VARIABLES
     _raw_value: Union[dict, list, None] = None
@@ -84,11 +87,13 @@ class NotationBase(NotationRepresentation):
         Returns:
             str
         """
-        _kebab_clean: str = string.replace('-', '_').replace(' ', '_')
-        _parsed = self._cast_pattern.sub('_', _kebab_clean)
-        return re.sub(r'_+', r'_', _parsed).lower().strip('_')
+        _kebab_clean: str = string.replace("-", "_").replace(" ", "_")
+        _parsed = self._cast_pattern.sub("_", _kebab_clean)
+        return re.sub(r"_+", r"_", _parsed).lower().strip("_")
 
-    def _print_debug(self, request: str, request_value: Union[str, int], stop: bool = False) -> None:
+    def _print_debug(
+        self, request: str, request_value: Union[str, int], stop: bool = False
+    ) -> None:
         """
         Print debug info about the object.
 
@@ -109,18 +114,20 @@ class NotationBase(NotationRepresentation):
 
         if self._debug and not stop:
             if self._type == dict:
-                _component_type = 'Object'
-                _output = ''
+                _component_type = "Object"
+                _output = ""
             elif self._type == list:
-                _component_type = 'Array'
-                _output = ''
+                _component_type = "Array"
+                _output = ""
             else:
-                _component_type = 'Primitive'
+                _component_type = "Primitive"
                 _output = f" :: Output == {self._value}"
 
-            _print_value = (f"{'   ' * self._depth}>>> {_component_type} :: "
-                            f"{request} == {request_value} :: Depth == {self._depth}"
-                            f"{_output}")
+            _print_value = (
+                f"{'   ' * self._depth}>>> {_component_type} :: "
+                f"{request} == {request_value} :: Depth == {self._depth}"
+                f"{_output}"
+            )
             print(_print_value)
 
     # MAGIC METHODS
@@ -135,7 +142,9 @@ class NotationBase(NotationRepresentation):
         """
         return self._yaml
 
-    def __call__(self, *args, **kwargs) -> Union[dict, list, str, int, float, bool, type, None]:
+    def __call__(
+        self, *args, **kwargs
+    ) -> Union[dict, list, str, int, float, bool, type, None]:
         """
         Call the object as a function to get specific values.
 
@@ -156,39 +165,37 @@ class NotationBase(NotationRepresentation):
         Returns:
             Union[dict, list, str, int, float, bool, type, None]
         """
-        #
-        _stop: bool = kwargs.get('stop', False)
+        _stop: bool = kwargs.get("stop", False)
 
         # get the "call type" to return the correct result
         try:
             self._call = args[0]
         # if no "call type" was provided, use `value`
         except IndexError:
-            self._call = 'value'
+            self._call = "value"
         finally:
             # if no "call type" is None, also use `value`
             if not self._call:
-                self._call = 'value'
-            self._print_debug('Call', self._call, _stop)
+                self._call = "value"
+            self._print_debug("Call", self._call, _stop)
 
         # based on the "call type", return the requested data
-        if self._call == 'value':
+        if self._call == "value":
             return self._value
-        elif self._call == 'element':
+        if self._call == "element":
             return self._element
-        elif self._call == 'type':
+        if self._call == "type":
             return self._type
-        elif self._call == 'depth':
+        if self._call == "depth":
             return self._depth
-        elif self._call == 'map':
+        if self._call == "map":
             return self._map
-        elif self._call == 'json':
+        if self._call == "json":
             return self._json
-        elif self._call == 'yaml':
+        if self._call == "yaml":
             return self._yaml
-        else:
-            # TODO: load warnings of bad call
-            return None
+        # TODO: load warnings of bad call
+        return None
 
     # INTERNAL READ-ONLY PROPERTIES
     @property
@@ -238,27 +245,44 @@ class NotationBase(NotationRepresentation):
         Serialize the value to YAML format. Returns The YAML string if value is
         dict/list, else the `element` value of the NotationPrimitive.
 
+        Handles None values by returning them in the standard element format.
+
         Returns:
             Union[str, None]
         """
-        if isinstance(self._value, dict) or isinstance(self._value, list):
-            return yaml.dump(self._value, sort_keys=False, Dumper=NotationDumper).rstrip()
-        else:
-            return yaml.dump(self._element, sort_keys=False, Dumper=NotationDumper).rstrip()
-        # TODO: handle None
+        if self._value is None:
+            return yaml.dump(
+                self._element, sort_keys=False, Dumper=NotationDumper
+            ).rstrip()
+        if isinstance(self._value, (dict, list)):
+            return yaml.dump(
+                self._value, sort_keys=False, Dumper=NotationDumper
+            ).rstrip()
+        return yaml.dump(
+            self._element, sort_keys=False, Dumper=NotationDumper
+        ).rstrip()
 
     @property
     def _json(self) -> Union[str, None]:
         """
         Serialize the value to JSON format. Returns the JSON string if value is
-        dict/list, else None.
+        dict/list, else the element format for primitives including None.
+
+        Handles None values by returning them in JSON format.
 
         Returns:
-            str
+            Union[str, None]
         """
-        return json.dumps(self._value, indent=self._indent)
-        # TODO: handle None
+        # Get indent from kwargs or use default
+        indent = getattr(self, "_indent", 3)
+
+        if self._value is None:
+            return json.dumps(self._element, indent=indent)
+        if isinstance(self._value, (dict, list)):
+            return json.dumps(self._value, indent=indent)
+        # For primitives, return the element format for consistency
+        return json.dumps(self._element, indent=indent)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
