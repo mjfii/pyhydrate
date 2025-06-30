@@ -141,7 +141,9 @@ class NotationPrimitive(NotationBase):
             try:
                 return float(self._raw_value)
             except ValueError:
-                raise ValueError(f"Cannot convert '{self._raw_value}' to float") from None
+                raise ValueError(
+                    f"Cannot convert '{self._raw_value}' to float"
+                ) from None
         elif isinstance(self._raw_value, bool):
             return float(self._raw_value)
         elif self._raw_value is None:
