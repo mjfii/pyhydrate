@@ -167,6 +167,36 @@ class NotationObject(NotationBase):
 
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
+    def __int__(self) -> int:
+        """
+        Convert object to int (should fail for dict structures).
+
+        Raises:
+            TypeError: Always raises as dict cannot be converted to int
+        """
+        raise TypeError("Cannot convert dict to int")
+
+    def __float__(self) -> float:
+        """
+        Convert object to float (should fail for dict structures).
+
+        Raises:
+            TypeError: Always raises as dict cannot be converted to float
+        """
+        raise TypeError("Cannot convert dict to float")
+
+    def __bool__(self) -> bool:
+        """
+        Convert object to bool following Python's truthiness rules.
+        Empty dicts are False, non-empty dicts are True.
+
+        Returns:
+            bool: False if dict is empty, True otherwise
+        """
+        if self._raw_value is None:
+            return False
+        return bool(self._raw_value)
+
 
 class NotationArray(NotationBase):
     """
@@ -280,3 +310,33 @@ class NotationArray(NotationBase):
 
             # Don't cache error results as they might be valid later
             return NotationPrimitive(None, self._depth, **self._kwargs)
+
+    def __int__(self) -> int:
+        """
+        Convert array to int (should fail for list structures).
+
+        Raises:
+            TypeError: Always raises as list cannot be converted to int
+        """
+        raise TypeError("Cannot convert list to int")
+
+    def __float__(self) -> float:
+        """
+        Convert array to float (should fail for list structures).
+
+        Raises:
+            TypeError: Always raises as list cannot be converted to float
+        """
+        raise TypeError("Cannot convert list to float")
+
+    def __bool__(self) -> bool:
+        """
+        Convert array to bool following Python's truthiness rules.
+        Empty lists are False, non-empty lists are True.
+
+        Returns:
+            bool: False if list is empty, True otherwise
+        """
+        if self._raw_value is None:
+            return False
+        return bool(self._raw_value)

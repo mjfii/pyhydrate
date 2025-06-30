@@ -184,7 +184,6 @@ class NotationBase(object):
         # a known representation does not exist, return None/unknown
         return f"{self._repr_key}(None)"
 
-
     def __call__(
         self, *args: Any, **kwargs: Any
     ) -> Union[dict, list, str, int, float, bool, type, None]:
