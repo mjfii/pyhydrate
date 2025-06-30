@@ -14,9 +14,8 @@ from .notation.notation_base import NotationBase
 
 
 class PyHydrate(NotationBase):
-    # CLASS VARIABLES
-    _root_type: Union[type, None] = None
-    _structure: Union[NotationArray, NotationObject, NotationPrimitive, None] = None
+    # Memory optimization with __slots__
+    __slots__ = ("_root_type", "_structure")
 
     # INTERNAL METHODS
     def _print_root(self) -> None:

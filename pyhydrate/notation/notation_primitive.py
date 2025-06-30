@@ -33,6 +33,9 @@ class NotationPrimitive(NotationBase):
         _primitives (List[type]): Valid primitive types.
     """
 
+    # Memory optimization with __slots__ (inherits from NotationBase)
+    __slots__ = ()
+
     # CLASS VARIABLES
     _primitives: ClassVar[List[type]] = [str, int, float, bool, type(None)]
 
@@ -62,10 +65,8 @@ class NotationPrimitive(NotationBase):
 
         if type(value) in self._primitives:
             self._raw_value = value
-            self._cleaned_value = value
         else:
             self._raw_value = None
-            self._cleaned_value = None
             _warning: str = (
                 f"The `{self.__class__.__name__}` class does not support type '{type(value).__name__}'. "
                 f"`None` value and `NoneType` returned instead."

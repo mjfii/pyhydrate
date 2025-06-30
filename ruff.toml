@@ -130,7 +130,7 @@ ignore = [
     # Allow whitespace in blank lines in docstrings
     "W293",
     # Avoid conflict with formatter
-    "COM812",
+    "COM812", "ISC001",
     # Allow unittest.assertRaises instead of pytest.raises (this is a unittest project)
     "PT027",
 ]

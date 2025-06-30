@@ -11,7 +11,7 @@ Child classes inherit from NotationBase to get this base functionality.
 import json
 import re
 import textwrap
-from typing import Any, ClassVar, Pattern, Union
+from typing import Any, Pattern, Union
 
 import yaml
 
@@ -44,7 +44,6 @@ class NotationBase(object):
     _idk: str = r"¯\_(ツ)_/¯"
 
     # CLASS DEFAULT PARAMETERS
-    _debug: bool = False
     _indent: int = 3
 
     r"""
@@ -72,12 +71,8 @@ class NotationBase(object):
         r"(?<!\d)(?=\d)|(?<=\d)(?!\d)|(?<=[a-z])(?=[A-Z])"
     )
 
-    # CLASS VARIABLES
-    _raw_value: Union[dict, list, None] = None
-    _cleaned_value: Union[dict, list, None] = None
-    _hydrated_value: Union[dict, list, None] = None
-    _kwargs: ClassVar[dict] = {}
-    _depth: int = 1
+    # Memory optimization with __slots__
+    __slots__ = ("_call", "_debug", "_depth", "_kwargs", "_raw_value")
 
     # INTERNAL METHODS
     def _cast_key(self, string: str) -> str:
@@ -326,6 +321,7 @@ class NotationBase(object):
     def _value(self) -> Union[dict, list, None]:
         """
         The cleaned value(s), i.e. keys are converted to lower case snake.
+        Now computed on-demand for memory efficiency.
 
         Returns:
             Union[dict, list, None]
@@ -341,6 +337,48 @@ class NotationBase(object):
             type
         """
         return type(self._value)
+
+    @property
+    def _cleaned_value(self) -> Union[dict, list, None]:
+        """
+        Compute cleaned value on demand for memory efficiency.
+
+        Returns:
+            Union[dict, list, None]
+        """
+        return self._get_cleaned_value()
+
+    def _get_cleaned_value(self) -> Union[dict, list, None]:
+        """
+        Helper method to compute cleaned value on demand.
+        Override in child classes for specific behavior.
+
+        Returns:
+            Union[dict, list, None]
+        """
+        return self._raw_value
+
+    def _create_child(self, value: Union[dict, list, Any]) -> "NotationBase":
+        """
+        Factory method for creating child notation objects.
+
+        Parameters:
+            value: The raw value to wrap
+
+        Returns:
+            NotationBase: The appropriate notation object
+        """
+        if isinstance(value, dict):
+            from .notation_structures import NotationObject
+
+            return NotationObject(value, self._depth, **self._kwargs)
+        if isinstance(value, list):
+            from .notation_structures import NotationArray
+
+            return NotationArray(value, self._depth, **self._kwargs)
+        from .notation_primitive import NotationPrimitive
+
+        return NotationPrimitive(value, self._depth, **self._kwargs)
 
     @property
     def _map(self) -> Union[dict, list, None]:
