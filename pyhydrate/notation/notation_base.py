@@ -10,7 +10,7 @@ Child classes inherit from NotationBase to get this base functionality.
 
 import json
 import re
-from typing import Any, Pattern, Union
+from typing import Any, ClassVar, Pattern, Union
 
 import yaml
 
@@ -70,7 +70,7 @@ class NotationBase(NotationRepresentation):
     _raw_value: Union[dict, list, None] = None
     _cleaned_value: Union[dict, list, None] = None
     _hydrated_value: Union[dict, list, None] = None
-    _kwargs: dict = {}
+    _kwargs: ClassVar[dict] = {}
     _depth: int = 1
 
     # INTERNAL METHODS
@@ -90,7 +90,7 @@ class NotationBase(NotationRepresentation):
         return re.sub(r"_+", r"_", _parsed).lower().strip("_")
 
     def _print_debug(
-        self, request: str, request_value: Union[str, int], stop: bool = False
+        self, request: str, request_value: Union[str, int], *, stop: bool = False
     ) -> None:
         """
         Print debug info about the object.
@@ -111,10 +111,10 @@ class NotationBase(NotationRepresentation):
         _output: Union[str, None] = None
 
         if self._debug and not stop:
-            if self._type == dict:
+            if self._type is dict:
                 _component_type = "Object"
                 _output = ""
-            elif self._type == list:
+            elif self._type is list:
                 _component_type = "Array"
                 _output = ""
             else:
@@ -143,10 +143,10 @@ class NotationBase(NotationRepresentation):
     def __int__(self) -> int:
         """
         Convert primitive value to int if possible.
-        
+
         Returns:
             int: The integer representation of the value.
-            
+
         Raises:
             ValueError: If string value cannot be converted to int.
             TypeError: If value type cannot be converted to int.
@@ -169,10 +169,10 @@ class NotationBase(NotationRepresentation):
     def __float__(self) -> float:
         """
         Convert primitive value to float if possible.
-        
+
         Returns:
             float: The float representation of the value.
-            
+
         Raises:
             ValueError: If string value cannot be converted to float.
             TypeError: If value type cannot be converted to float.
@@ -194,7 +194,7 @@ class NotationBase(NotationRepresentation):
     def __bool__(self) -> bool:
         """
         Convert value to boolean following Python's truthiness rules.
-        
+
         Returns:
             bool: The boolean representation of the value.
         """
@@ -205,7 +205,7 @@ class NotationBase(NotationRepresentation):
         return bool(self._value)
 
     def __call__(
-        self, *args, **kwargs
+        self, *args: Any, **kwargs: Any
     ) -> Union[dict, list, str, int, float, bool, type, None]:
         """
         Call the object as a function to get specific values.
@@ -239,7 +239,7 @@ class NotationBase(NotationRepresentation):
             # if no "call type" is None, also use `value`
             if not self._call:
                 self._call = "value"
-            self._print_debug("Call", self._call, _stop)
+            self._print_debug("Call", self._call, stop=_stop)
 
         # based on the "call type", return the requested data
         if self._call == "value":
@@ -320,9 +320,7 @@ class NotationBase(NotationRepresentation):
             return yaml.dump(
                 self._value, sort_keys=False, Dumper=NotationDumper
             ).rstrip()
-        return yaml.dump(
-            self._element, sort_keys=False, Dumper=NotationDumper
-        ).rstrip()
+        return yaml.dump(self._element, sort_keys=False, Dumper=NotationDumper).rstrip()
 
     @property
     def _json(self) -> Union[str, None]:

@@ -131,6 +131,8 @@ ignore = [
     "W293",
     # Avoid conflict with formatter
     "COM812",
+    # Allow unittest.assertRaises instead of pytest.raises (this is a unittest project)
+    "PT027",
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.

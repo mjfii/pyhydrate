@@ -1,7 +1,5 @@
 import unittest
 
-import pytest
-
 import pyhydrate as pyhy
 
 
@@ -48,35 +46,35 @@ class MagicMethodsTests(unittest.TestCase):
         # Note: PyHydrate auto-converts valid numbers via YAML parsing
         # So we test with a string that contains a decimal but isn't auto-converted
         test_string = pyhy.PyHydrate("45.67abc")  # This won't be converted to float
-        with pytest.raises(ValueError) as cm:
+        with self.assertRaises(ValueError) as cm:
             int(test_string)
         assert "Cannot convert '45.67abc' to int" in str(cm.exception)
 
     def test_int_conversion_from_string_invalid(self) -> None:
         """Test __int__ conversion from string with invalid content."""
         test_string = pyhy.PyHydrate("not_a_number")
-        with pytest.raises(ValueError) as cm:
+        with self.assertRaises(ValueError) as cm:
             int(test_string)
         assert "Cannot convert 'not_a_number' to int" in str(cm.exception)
 
     def test_int_conversion_from_none(self) -> None:
         """Test __int__ conversion from None value."""
         test_none = pyhy.PyHydrate(None)
-        with pytest.raises(TypeError) as cm:
+        with self.assertRaises(TypeError) as cm:
             int(test_none)
         assert "Cannot convert NoneType to int" in str(cm.exception)
 
     def test_int_conversion_from_dict(self) -> None:
         """Test __int__ conversion from dict value (should fail)."""
         test_dict = pyhy.PyHydrate({"key": "value"})
-        with pytest.raises(TypeError) as cm:
+        with self.assertRaises(TypeError) as cm:
             int(test_dict)
         assert "Cannot convert dict to int" in str(cm.exception)
 
     def test_int_conversion_from_list(self) -> None:
         """Test __int__ conversion from list value (should fail)."""
         test_list = pyhy.PyHydrate([1, 2, 3])
-        with pytest.raises(TypeError) as cm:
+        with self.assertRaises(TypeError) as cm:
             int(test_list)
         assert "Cannot convert list to int" in str(cm.exception)
 
@@ -125,28 +123,28 @@ class MagicMethodsTests(unittest.TestCase):
     def test_float_conversion_from_string_invalid(self) -> None:
         """Test __float__ conversion from string with invalid content."""
         test_string = pyhy.PyHydrate("not_a_number")
-        with pytest.raises(ValueError) as cm:
+        with self.assertRaises(ValueError) as cm:
             float(test_string)
         assert "Cannot convert 'not_a_number' to float" in str(cm.exception)
 
     def test_float_conversion_from_none(self) -> None:
         """Test __float__ conversion from None value."""
         test_none = pyhy.PyHydrate(None)
-        with pytest.raises(TypeError) as cm:
+        with self.assertRaises(TypeError) as cm:
             float(test_none)
         assert "Cannot convert NoneType to float" in str(cm.exception)
 
     def test_float_conversion_from_dict(self) -> None:
         """Test __float__ conversion from dict value (should fail)."""
         test_dict = pyhy.PyHydrate({"key": "value"})
-        with pytest.raises(TypeError) as cm:
+        with self.assertRaises(TypeError) as cm:
             float(test_dict)
         assert "Cannot convert dict to float" in str(cm.exception)
 
     def test_float_conversion_from_list(self) -> None:
         """Test __float__ conversion from list value (should fail)."""
         test_list = pyhy.PyHydrate([1, 2, 3])
-        with pytest.raises(TypeError) as cm:
+        with self.assertRaises(TypeError) as cm:
             float(test_list)
         assert "Cannot convert list to float" in str(cm.exception)
 
@@ -232,15 +230,15 @@ class MagicMethodsTests(unittest.TestCase):
         """Test magic methods work with nested object access."""
         test_data = {"numbers": {"int": 42, "float": 3.14, "str": "123"}}
         test_obj = pyhy.PyHydrate(test_data)
-        
+
         # Test int conversion on nested access
         result_int = int(test_obj.numbers.int)
         assert result_int == 42
-        
+
         # Test float conversion on nested access
         result_float = float(test_obj.numbers.float)
         assert result_float == 3.14
-        
+
         # Test bool conversion on nested access
         result_bool = bool(test_obj.numbers.str)
         assert result_bool is True
@@ -249,7 +247,7 @@ class MagicMethodsTests(unittest.TestCase):
         """Test magic methods work with array element access."""
         test_data = [42, 3.14, "123", False]
         test_obj = pyhy.PyHydrate(test_data)
-        
+
         # Test conversions on array elements
         assert int(test_obj[0]) == 42
         assert float(test_obj[1]) == 3.14

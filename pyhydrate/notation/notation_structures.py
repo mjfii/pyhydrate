@@ -11,7 +11,7 @@ NotationArray wraps a list structure with the same nested elements.
 """
 
 import warnings
-from typing import Union
+from typing import Any, Union
 
 from typing_extensions import Self
 
@@ -28,7 +28,7 @@ class NotationObject(NotationBase):
     arrays, or primitives.
     """
 
-    def __init__(self, value: dict, depth: int, **kwargs) -> None:
+    def __init__(self, value: dict, depth: int, **kwargs: Any) -> None:
         """
         Initialize with the raw dict and recursion depth.
 
@@ -112,7 +112,7 @@ class NotationArray(NotationBase):
     elements similarly to NotationObject.
     """
 
-    def __init__(self, value: list, depth: int, **kwargs) -> None:
+    def __init__(self, value: list, depth: int, **kwargs: Any) -> None:
         """
         Initialize with the raw list value.
 
@@ -144,7 +144,6 @@ class NotationArray(NotationBase):
 
             self._hydrated_value = _hydrated
         else:
-            # self._value = NotationValue(None)
             _warning: str = (
                 f"The `{self.__class__.__name__}` class does not support type '{type(value).__name__}'. "
                 f"`None` value and `NoneType` returned instead."

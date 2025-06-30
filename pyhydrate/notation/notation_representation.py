@@ -68,9 +68,7 @@ class NotationRepresentation(object):
             if isinstance(_working_value, str):
                 return f"{self._repr_key}('{_working_value}')"
             # return the non-string unquoted primitive
-            if (
-                isinstance(_working_value, (bool, float, int))
-            ):
+            if isinstance(_working_value, (bool, float, int)):
                 return f"{self._repr_key}({_working_value})"
             # return an indented string
             # TODO: this is incomplete, the structure should be quoted and escaped

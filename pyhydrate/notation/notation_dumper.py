@@ -17,13 +17,19 @@ class NotationDumper(yaml.Dumper):
     withing the YAML string.
     """
 
-    def increase_indent(self, flow=False, *args, **kwargs) -> None:
+    def increase_indent(self, *, flow: bool = False, indentless: bool = False) -> None:
         """
         Increase indentation on dump of lists.
+
+        Args:
+            flow: Boolean flag for flow style (keyword-only).
+            indentless: Boolean flag for indentless style (keyword-only, unused but required for API compatibility).
 
         Returns:
             None
         """
+        # Note: indentless parameter is unused but required for parent class API compatibility
+        _ = indentless  # Explicitly acknowledge unused parameter
         return super().increase_indent(flow=flow, indentless=False)
 
 

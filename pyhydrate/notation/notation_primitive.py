@@ -8,7 +8,7 @@ It inherits from NotationBase to get common functionality.
 """
 
 import warnings
-from typing import List, Union
+from typing import Any, ClassVar, List, Union
 
 from typing_extensions import Self
 
@@ -34,10 +34,10 @@ class NotationPrimitive(NotationBase):
     """
 
     # CLASS VARIABLES
-    _primitives: List[type] = [str, int, float, bool, type(None)]
+    _primitives: ClassVar[List[type]] = [str, int, float, bool, type(None)]
 
     def __init__(
-        self, value: Union[str, int, float, bool, None], depth: int, **kwargs
+        self, value: Union[str, float, bool, None], depth: int, **kwargs: Any
     ) -> None:
         """
         Initialize with the primitive value to wrap.
@@ -83,7 +83,7 @@ class NotationPrimitive(NotationBase):
         self._print_debug("Get", key)
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
-    def __getitem__(self, index) -> Self:
+    def __getitem__(self, index: Any) -> Self:
         """
         Primitive values do not support indexing/index slicing. Returns a
         wrapper of NoneType/None to allow graceful failed access.

@@ -1,7 +1,7 @@
 import contextlib
 import json
 from json import JSONDecodeError
-from typing import Union
+from typing import Any, Union
 
 import yaml
 
@@ -25,7 +25,9 @@ class PyHydrate(NotationRepresentation):
 
     # MAGIC METHODS
     def __init__(
-        self, source_value: Union[dict, list, str, int, float, bool, None], **kwargs
+        self,
+        source_value: Union[dict, list, str, float, bool, None],
+        **kwargs: Any,
     ) -> None:
         self._debug = kwargs.get("debug", False)
 
@@ -44,9 +46,7 @@ class PyHydrate(NotationRepresentation):
         elif isinstance(source_value, list):
             self._root_type = list
             self._structure = NotationArray(source_value, 0, **kwargs)
-        elif (
-            isinstance(source_value, (int, float, bool, str))
-        ):
+        elif isinstance(source_value, (int, float, bool, str)):
             self._root_type = type(source_value)
             self._structure = NotationPrimitive(source_value, 0, **kwargs)
         elif isinstance(source_value, type(None)):
@@ -85,7 +85,7 @@ class PyHydrate(NotationRepresentation):
         return self._structure[index]
 
     def __call__(
-        self, *args, **kwargs
+        self, *args: Any
     ) -> Union[dict, list, str, int, float, bool, type, None]:
         self._print_root()
         try:

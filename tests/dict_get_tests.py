@@ -1,12 +1,13 @@
 import json
 import unittest
+from pathlib import Path
 
 import pyhydrate as pyhy
 
 
 class DictReadMethods(unittest.TestCase):
     _data = pyhy.PyHydrate(
-        json.loads(open("./pyhydrate/data/basic-dict-get.json").read()), debug=True
+        json.loads(Path("./pyhydrate/data/basic-dict-get.json").read_text()), debug=True
     )
 
     def test_string_lookup(self) -> None:
