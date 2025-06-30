@@ -109,7 +109,7 @@ def handle_access_pattern_error(
         logger = setup_logger(__name__, debug=True)
         logger.debug(f"Invalid access: {accessor} on {accessed_type.__name__}")
 
-    return NotationPrimitive(None)
+    return NotationPrimitive(None, depth=0)
 
 
 def handle_api_usage_error(
