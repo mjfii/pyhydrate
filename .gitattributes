@@ -19,12 +19,22 @@ docker-compose.yml linguist-language=Dockerfile
 # GitHub linguistics
 *.gitkeep linguist-detectable=true
 *.gitkeep linguist-language=Git Config
+.github/workflows/**/*.yml linguist-language=Git Config
+.github/workflows/**/*.yaml linguist-language=Git Config
 
 # Python linguistics
 *.py linguist-detectable=true
 *.py linguist-language=Python
 requirements.txt linguist-detectable=true
 requirements.txt linguist-language=Python
+setup.py linguist-detectable=true
+setup.py linguist-language=Python
+
+# TOML linguistics
+pyproject.toml linguist-detectable=true
+pyproject.toml linguist-language=TOML
+ruff.toml linguist-detectable=true
+ruff.toml linguist-language=TOML
 
 # Binary detection
 *.png binary
