@@ -36,7 +36,8 @@ class CallMethods(unittest.TestCase):
             # Check that warning was issued
             assert len(w) == 1
             assert issubclass(w[0].category, UserWarning)
-            assert "Invalid call type 'invalid_call'" in str(w[0].message)
+            assert "Call type failed with str" in str(w[0].message)
+            assert "invalid_call" in str(w[0].message)
             assert (
                 "Valid options are: value, element, type, depth, map, json, yaml"
                 in str(w[0].message)
@@ -55,7 +56,8 @@ class CallMethods(unittest.TestCase):
             # Check that warning was issued
             assert len(w) == 1
             assert issubclass(w[0].category, UserWarning)
-            assert "Invalid call type 'bad_call'" in str(w[0].message)
+            assert "Call type failed with str" in str(w[0].message)
+            assert "bad_call" in str(w[0].message)
             assert (
                 "Valid options are: value, element, type, depth, map, json, yaml"
                 in str(w[0].message)
