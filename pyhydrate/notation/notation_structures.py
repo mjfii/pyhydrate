@@ -11,12 +11,14 @@ NotationArray wraps a list structure with the same nested elements.
 """
 
 import warnings
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from typing_extensions import Self
 
 from .notation_base import NotationBase
-from .notation_primitive import NotationPrimitive
+
+if TYPE_CHECKING:
+    from .notation_primitive import NotationPrimitive
 
 
 class NotationObject(NotationBase):
@@ -61,6 +63,8 @@ class NotationObject(NotationBase):
                     _hydrated[_casted_key] = NotationArray(_v, self._depth, **kwargs)
                     _cleaned[_casted_key] = _hydrated[_casted_key](stop=True)
                 else:
+                    from .notation_primitive import NotationPrimitive
+
                     _hydrated[_casted_key] = NotationPrimitive(
                         _v, self._depth, **kwargs
                     )
@@ -75,7 +79,9 @@ class NotationObject(NotationBase):
             )
             warnings.warn(_warning, stacklevel=2)
 
-    def __getattr__(self, key: str) -> Union[Self, "NotationArray", NotationPrimitive]:
+    def __getattr__(
+        self, key: str
+    ) -> Union[Self, "NotationArray", "NotationPrimitive"]:
         """
          Get a child element by attribute name.
 
@@ -86,11 +92,13 @@ class NotationObject(NotationBase):
             Union[NotationObject, NotationArray, NotationPrimitive]
         """
         self._print_debug("Get", key)
+        from .notation_primitive import NotationPrimitive
+
         return self._hydrated_value.get(
             key, NotationPrimitive(None, self._depth, **self._kwargs)
         )
 
-    def __getitem__(self, index: int) -> NotationPrimitive:
+    def __getitem__(self, index: int) -> "NotationPrimitive":
         """
         Not implemented for objects.
 
@@ -101,6 +109,8 @@ class NotationObject(NotationBase):
             NotationPrimitive(None)
         """
         self._print_debug("Slice", index)
+        from .notation_primitive import NotationPrimitive
+
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
 
@@ -140,6 +150,8 @@ class NotationArray(NotationBase):
                 elif isinstance(_v, list):
                     _hydrated.append(NotationArray(_v, self._depth, **self._kwargs))
                 else:
+                    from .notation_primitive import NotationPrimitive
+
                     _hydrated.append(NotationPrimitive(_v, self._depth, **self._kwargs))
 
             self._hydrated_value = _hydrated
@@ -150,7 +162,7 @@ class NotationArray(NotationBase):
             )
             warnings.warn(_warning, stacklevel=2)
 
-    def __getattr__(self, key: str) -> NotationPrimitive:
+    def __getattr__(self, key: str) -> "NotationPrimitive":
         """
         Not implemented for arrays.
 
@@ -161,9 +173,13 @@ class NotationArray(NotationBase):
             NotationPrimitive
         """
         self._print_debug("Get", key)
+        from .notation_primitive import NotationPrimitive
+
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
-    def __getitem__(self, index: int) -> Union[NotationObject, Self, NotationPrimitive]:
+    def __getitem__(
+        self, index: int
+    ) -> Union["NotationObject", Self, "NotationPrimitive"]:
         """
         Get child element by index.
 
@@ -179,12 +195,18 @@ class NotationArray(NotationBase):
             return self._hydrated_value[int(index)]
         except IndexError:
             print("index error")
+            from .notation_primitive import NotationPrimitive
+
             return NotationPrimitive(None, self._depth, **self._kwargs)
         except TypeError:
             print("type error")
+            from .notation_primitive import NotationPrimitive
+
             return NotationPrimitive(None, self._depth, **self._kwargs)
         except ValueError:
             print("value error")
+            from .notation_primitive import NotationPrimitive
+
             return NotationPrimitive(None, self._depth, **self._kwargs)
 
 

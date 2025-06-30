@@ -10,15 +10,15 @@ Child classes inherit from NotationBase to get this base functionality.
 
 import json
 import re
+import textwrap
 from typing import Any, ClassVar, Pattern, Union
 
 import yaml
 
 from .notation_dumper import NotationDumper
-from .notation_representation import NotationRepresentation
 
 
-class NotationBase(NotationRepresentation):
+class NotationBase(object):
     """
     Base Notation class with shared attributes and methods.
 
@@ -40,6 +40,12 @@ class NotationBase(NotationRepresentation):
     _source_key: str = "__SOURCE_KEY__"
     _cleaned_key: str = "__CLEANED_KEY__"
     _hydrated_key: str = "__HYDRATED_KEY__"
+    _repr_key: str = "PyHydrate"
+    _idk: str = r"¯\_(ツ)_/¯"
+
+    # CLASS DEFAULT PARAMETERS
+    _debug: bool = False
+    _indent: int = 3
 
     r"""
     This regex uses lookaheads and lookbehinds to match 3 different cases:
@@ -139,6 +145,51 @@ class NotationBase(NotationRepresentation):
             str: The object in YAML format.
         """
         return self._yaml
+
+    def __repr__(self) -> str:
+        """
+        Implement customized `__repr__` formatting and representation.
+
+        Returns:
+            str
+        """
+
+        # Try to get the raw value from the object
+        try:
+            _working_value: Union[str, None] = self.__dict__.get("_raw_value", None)
+        except AttributeError:
+            return f"{self._repr_key}(None)"
+
+        # Try to get the raw value from withing the structure object
+        # TODO: is this necessary?
+        if not _working_value:
+            try:
+                _working_value = self.__dict__.get("_structure").__dict__.get(
+                    "_raw_value", None
+                )
+            except AttributeError:
+                return f"{self._repr_key}(None)"
+
+        # Handle different working value types
+        if _working_value:
+            # return the quoted string
+            if isinstance(_working_value, str):
+                return f"{self._repr_key}('{_working_value}')"
+            # return the non-string unquoted primitive
+            if isinstance(_working_value, (bool, float, int)):
+                return f"{self._repr_key}({_working_value})"
+            # return an indented string
+            # TODO: this is incomplete, the structure should be quoted and escaped
+            if isinstance(_working_value, (dict, list)):
+                _return_value: str = textwrap.indent(
+                    json.dumps(_working_value, indent=3), 3 * " "
+                )
+                return f"{self._repr_key}(\n{_return_value}\n)"
+            # the primitive or structure is not handled, a warning should exist,
+            # return and unknown representation
+            return f"{self._repr_key}('{self._idk}')"
+        # a known representation does not exist, return None/unknown
+        return f"{self._repr_key}(None)"
 
     def __int__(self) -> int:
         """

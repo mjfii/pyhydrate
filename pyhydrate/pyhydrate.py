@@ -9,11 +9,11 @@ from .notation import (
     NotationArray,
     NotationObject,
     NotationPrimitive,
-    NotationRepresentation,
 )
+from .notation.notation_base import NotationBase
 
 
-class PyHydrate(NotationRepresentation):
+class PyHydrate(NotationBase):
     # CLASS VARIABLES
     _root_type: Union[type, None] = None
     _structure: Union[NotationArray, NotationObject, NotationPrimitive, None] = None

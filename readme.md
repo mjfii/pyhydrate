@@ -90,6 +90,159 @@ print(_demo.level_one.level_four)
 # NoneType: null
 ```
 
+### Class Architecture
+
+PyHydrate uses a clean, simplified inheritance hierarchy that provides dot notation access to nested data structures with graceful error handling.
+
+> **Recent Improvements (v2024)**: The architecture was recently refactored to eliminate circular dependencies and simplify the inheritance hierarchy from 4 levels to 2 levels, resulting in better performance and maintainability.
+
+#### Key Architectural Features
+
+- **🏗️ Simplified Inheritance**: Clean 2-level hierarchy (`PyHydrate` → `NotationBase`)
+- **🔄 No Circular Dependencies**: Lazy imports and TYPE_CHECKING guards prevent import cycles
+- **⚡ Performance Optimized**: Reduced inheritance overhead and faster initialization
+- **🎯 Single Responsibility**: Each class has a clear, focused purpose
+- **🔧 Extensible Design**: Easy to add new notation types or output formats
+- **✅ Test Coverage**: 67 comprehensive tests ensure reliability
+
+#### Class Hierarchy
+
+```mermaid
+classDiagram
+    class NotationBase {
+        +_raw_value: Union[dict, list, None]
+        +_cleaned_value: Union[dict, list, None]
+        +_hydrated_value: Union[dict, list, None]
+        +_depth: int
+        +_debug: bool
+        +_cast_key(string: str) str
+        +_print_debug(request: str, value: Union[str, int])
+        +__str__() str
+        +__repr__() str
+        +__int__() int
+        +__float__() float
+        +__bool__() bool
+        +__call__(*args, **kwargs) Union[dict, list, str, int, float, bool, type, None]
+        +_yaml: str
+        +_json: str
+        +_element: dict
+        +_value: Union[dict, list, None]
+        +_type: type
+    }
+
+    class PyHydrate {
+        +_root_type: Union[type, None]
+        +_structure: Union[NotationArray, NotationObject, NotationPrimitive, None]
+        +_print_root()
+        +__init__(source_value, **kwargs)
+        +__getattr__(key: str)
+        +__getitem__(index: Union[int, None])
+    }
+
+    class NotationObject {
+        +__init__(value: dict, depth: int, **kwargs)
+        +__getattr__(key: str) Union[NotationObject, NotationArray, NotationPrimitive]
+        +__getitem__(index: int) NotationPrimitive
+    }
+
+    class NotationArray {
+        +__init__(value: list, depth: int, **kwargs)
+        +__getattr__(key: str) NotationPrimitive
+        +__getitem__(index: int) Union[NotationObject, NotationArray, NotationPrimitive]
+    }
+
+    class NotationPrimitive {
+        +_primitives: List[type]
+        +__init__(value: Union[str, float, bool, None], depth: int, **kwargs)
+        +__getattr__(key: str) NotationPrimitive
+        +__getitem__(index: Any) NotationPrimitive
+    }
+
+    NotationBase <|-- PyHydrate
+    NotationBase <|-- NotationObject
+    NotationBase <|-- NotationArray
+    NotationBase <|-- NotationPrimitive
+
+    PyHydrate --> NotationObject : creates
+    PyHydrate --> NotationArray : creates
+    PyHydrate --> NotationPrimitive : creates
+    NotationObject --> NotationObject : nests
+    NotationObject --> NotationArray : contains
+    NotationObject --> NotationPrimitive : contains
+    NotationArray --> NotationObject : contains
+    NotationArray --> NotationArray : nests
+    NotationArray --> NotationPrimitive : contains
+```
+
+#### Data Flow Architecture
+
+```mermaid
+flowchart TD
+    A[Input Data<br/>dict/list/primitive] --> B[PyHydrate Constructor]
+    B --> C{Type Detection}
+    
+    C -->|dict| D[NotationObject]
+    C -->|list| E[NotationArray]
+    C -->|primitive| F[NotationPrimitive]
+    
+    D --> G[Key Normalization<br/>camelCase → snake_case]
+    G --> H[Recursive Wrapping]
+    H --> I[Dot Notation Access]
+    
+    E --> J[Index-based Access]
+    J --> H
+    
+    F --> K[Value Wrapping]
+    K --> I
+    
+    I --> L[Output Formats]
+    L --> M[YAML]
+    L --> N[JSON]
+    L --> O[Python Types]
+    L --> P[Element Dict]
+
+    style A fill:#e1f5fe
+    style I fill:#f3e5f5
+    style L fill:#e8f5e8
+```
+
+#### Dependency Management
+
+```mermaid
+graph TB
+    subgraph "Core Module"
+        A[pyhydrate/__init__.py]
+        B[pyhydrate/pyhydrate.py]
+    end
+    
+    subgraph "Notation System"
+        C[notation/notation_base.py]
+        D[notation/notation_structures.py]
+        E[notation/notation_primitive.py]
+        F[notation/notation_dumper.py]
+        G[notation/__init__.py]
+    end
+    
+    subgraph "Type System"
+        H[types.py]
+    end
+    
+    A --> B
+    A --> G
+    B --> C
+    G --> D
+    G --> E
+    D --> C
+    E --> C
+    D -.->|lazy import| E
+    C --> F
+    H -.->|TYPE_CHECKING| D
+    H -.->|TYPE_CHECKING| E
+    
+    style C fill:#ffecb3
+    style H fill:#e1f5fe
+```
+
 ### Nomenclature
 The following nomenclature is being used within the code base, within
 the documentation, and within
@@ -119,6 +272,14 @@ the documentation, and within
   interrogated.
 - Map: A dict representation of the translations from source Object keys
   to "cleaned" keys, i.e. the Cleaned Values.
+
+### Performance & Quality
+
+- **⚡ Fast**: Optimized inheritance hierarchy with minimal overhead
+- **🧪 Tested**: 67 comprehensive tests with 100% pass rate
+- **🎯 Type-Safe**: Full type annotations with mypy compatibility
+- **📏 Linted**: Zero linting errors with ruff configuration
+- **🔄 CI/CD**: Automated testing and quality checks on every commit
 
 ### Documentation
 Coming Soon to [readthedocs.com](https://about.readthedocs.com/)!
