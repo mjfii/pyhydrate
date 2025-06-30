@@ -7,17 +7,18 @@ checking, recursion depth tracking, etc.
 
 Child classes inherit from NotationBase to get this base functionality.
 """
-from typing import Union
-from typing import Pattern
-from typing import Any
+
 import json
-import yaml
 import re
+import textwrap
+from typing import Any, Pattern, Union
+
+import yaml
+
 from .notation_dumper import NotationDumper
-from .notation_representation import NotationRepresentation
 
 
-class NotationBase(NotationRepresentation):
+class NotationBase(object):
     """
     Base Notation class with shared attributes and methods.
 
@@ -26,33 +27,31 @@ class NotationBase(NotationRepresentation):
     depth, etc. Child classes will inherit this to reduce code duplication.
 
     Attributes:
-        _raw_value (str): The original untouched value.
-        _cleaned_value (str): The processed value after type checking.
-        _hydrated_value (str): The wrapped Notation object.
         _cast_pattern (Pattern[Any]): Regex raw string pattern for formatting
         object/dict keys.
-        _kwargs (dict): Additional options passed during initialization.
-        _depth (int): Recursion depth of wrapper class.
     """
 
-    # TODO: add __int__, __bool__, and __float__ logic.
-
     # CLASS CONSTANTS
-    _source_key: str = '__SOURCE_KEY__'
-    _cleaned_key: str = '__CLEANED_KEY__'
-    _hydrated_key: str = '__HYDRATED_KEY__'
+    _source_key: str = "__SOURCE_KEY__"
+    _cleaned_key: str = "__CLEANED_KEY__"
+    _hydrated_key: str = "__HYDRATED_KEY__"
+    _repr_key: str = "PyHydrate"
+    _idk: str = r"¯\_(ツ)_/¯"
 
-    r'''
+    # CLASS DEFAULT PARAMETERS
+    _indent: int = 3
+
+    r"""
     This regex uses lookaheads and lookbehinds to match 3 different cases:
-        - (?<!\d)(?=\d) - Matches positions that are preceded by a non-digit 
-                          and followed by a digit. This will match between a 
+        - (?<!\d)(?=\d) - Matches positions that are preceded by a non-digit
+                          and followed by a digit. This will match between a
                           non-digit and a digit character.
-        - (?<=\d)(?!\d) - Matches positions that are preceded by a digit and 
-                          followed by a non-digit. This will match between a 
+        - (?<=\d)(?!\d) - Matches positions that are preceded by a digit and
+                          followed by a non-digit. This will match between a
                           digit and a non-digit character.
-        - (?<=[a-z])(?=[A-Z]) - Matches positions that are preceded by a 
-                                lowercase letter and followed by an uppercase 
-                                letter. This will match between a lowercase 
+        - (?<=[a-z])(?=[A-Z]) - Matches positions that are preceded by a
+                                lowercase letter and followed by an uppercase
+                                letter. This will match between a lowercase
                                 and uppercase letter.
 
     So in summary, this regex will match:
@@ -60,17 +59,15 @@ class NotationBase(NotationRepresentation):
         - Between a digit and non-digit character
         - Between a lowercase and uppercase letter
 
-    It uses lookarounds to match the positions between the specified characters 
+    It uses lookarounds to match the positions between the specified characters
     without including those characters in the match.
-    '''
-    _cast_pattern: Pattern[Any] = re.compile(r'(?<!\d)(?=\d)|(?<=\d)(?!\d)|(?<=[a-z])(?=[A-Z])')
+    """
+    _cast_pattern: Pattern[Any] = re.compile(
+        r"(?<!\d)(?=\d)|(?<=\d)(?!\d)|(?<=[a-z])(?=[A-Z])"
+    )
 
-    # CLASS VARIABLES
-    _raw_value: Union[dict, list, None] = None
-    _cleaned_value: Union[dict, list, None] = None
-    _hydrated_value: Union[dict, list, None] = None
-    _kwargs: dict = {}
-    _depth: int = 1
+    # Memory optimization with __slots__
+    __slots__ = ("_call", "_debug", "_depth", "_kwargs", "_raw_value")
 
     # INTERNAL METHODS
     def _cast_key(self, string: str) -> str:
@@ -84,11 +81,13 @@ class NotationBase(NotationRepresentation):
         Returns:
             str
         """
-        _kebab_clean: str = string.replace('-', '_').replace(' ', '_')
-        _parsed = self._cast_pattern.sub('_', _kebab_clean)
-        return re.sub(r'_+', r'_', _parsed).lower().strip('_')
+        _kebab_clean: str = string.replace("-", "_").replace(" ", "_")
+        _parsed = self._cast_pattern.sub("_", _kebab_clean)
+        return re.sub(r"_+", r"_", _parsed).lower().strip("_")
 
-    def _print_debug(self, request: str, request_value: Union[str, int], stop: bool = False) -> None:
+    def _print_debug(
+        self, request: str, request_value: Union[str, int], *, stop: bool = False
+    ) -> None:
         """
         Print debug info about the object.
 
@@ -108,20 +107,25 @@ class NotationBase(NotationRepresentation):
         _output: Union[str, None] = None
 
         if self._debug and not stop:
-            if self._type == dict:
-                _component_type = 'Object'
-                _output = ''
-            elif self._type == list:
-                _component_type = 'Array'
-                _output = ''
+            from ..error_handling import setup_logger
+
+            if self._type is dict:
+                _component_type = "Object"
+                _output = ""
+            elif self._type is list:
+                _component_type = "Array"
+                _output = ""
             else:
-                _component_type = 'Primitive'
+                _component_type = "Primitive"
                 _output = f" :: Output == {self._value}"
 
-            _print_value = (f"{'   ' * self._depth}>>> {_component_type} :: "
-                            f"{request} == {request_value} :: Depth == {self._depth}"
-                            f"{_output}")
-            print(_print_value)
+            logger = setup_logger(
+                f"{self.__class__.__module__}.{self.__class__.__name__}", debug=True
+            )
+            logger.debug(
+                f"{'   ' * self._depth}>>> {_component_type} :: "
+                f"{request} == {request_value} :: Depth == {self._depth}{_output}"
+            )
 
     # MAGIC METHODS
     def __str__(self) -> str:
@@ -135,7 +139,55 @@ class NotationBase(NotationRepresentation):
         """
         return self._yaml
 
-    def __call__(self, *args, **kwargs) -> Union[dict, list, str, int, float, bool, type, None]:
+    def __repr__(self) -> str:
+        """
+        Implement customized `__repr__` formatting and representation.
+
+        Returns:
+            str
+        """
+
+        # Try to get the raw value from the object
+        try:
+            _working_value: Union[str, None] = self.__dict__.get("_raw_value", None)
+        except AttributeError:
+            return f"{self._repr_key}(None)"
+
+        # Try to get the raw value from withing the structure object
+        # TODO: is this necessary?
+        if not _working_value:
+            try:
+                _working_value = self.__dict__.get("_structure").__dict__.get(
+                    "_raw_value", None
+                )
+            except AttributeError:
+                return f"{self._repr_key}(None)"
+
+        # Handle different working value types
+        if _working_value:
+            # return the quoted string
+            if isinstance(_working_value, str):
+                return f"{self._repr_key}('{_working_value}')"
+            # return the non-string unquoted primitive
+            if isinstance(_working_value, (bool, float, int)):
+                return f"{self._repr_key}({_working_value})"
+            # return an indented string
+            # TODO: this is incomplete, the structure should be quoted and escaped
+            if isinstance(_working_value, (dict, list)):
+                _return_value: str = textwrap.indent(
+                    json.dumps(_working_value, indent=3), 3 * " "
+                )
+                return f"{self._repr_key}(\n{_return_value}\n)"
+            # the primitive or structure is not handled, a warning should exist,
+            # return and unknown representation
+            return f"{self._repr_key}('{self._idk}')"
+        # a known representation does not exist, return None/unknown
+        return f"{self._repr_key}(None)"
+
+
+    def __call__(
+        self, *args: Any, **kwargs: Any
+    ) -> Union[dict, list, str, int, float, bool, type, None]:
         """
         Call the object as a function to get specific values.
 
@@ -144,6 +196,11 @@ class NotationBase(NotationRepresentation):
             - 'element': The _element attribute.
             - 'type': The object's type.
             - 'depth': The recursion depth.
+            - 'map': The key mapping (when implemented).
+            - 'json': JSON string representation.
+            - 'yaml': YAML string representation.
+
+        Invalid call types will issue a UserWarning and return None.
 
         Utilized key/values for kwargs are:
             - debug: TODO:
@@ -154,41 +211,51 @@ class NotationBase(NotationRepresentation):
             **kwargs: Additional options.
 
         Returns:
-            Union[dict, list, str, int, float, bool, type, None]
+            Union[dict, list, str, int, float, bool, type, None]: The requested value or None for invalid call types.
+
+        Warnings:
+            UserWarning: When an invalid call type is provided.
         """
-        #
-        _stop: bool = kwargs.get('stop', False)
+        _stop: bool = kwargs.get("stop", False)
 
         # get the "call type" to return the correct result
         try:
             self._call = args[0]
         # if no "call type" was provided, use `value`
         except IndexError:
-            self._call = 'value'
+            self._call = "value"
         finally:
             # if no "call type" is None, also use `value`
             if not self._call:
-                self._call = 'value'
-            self._print_debug('Call', self._call, _stop)
+                self._call = "value"
+            self._print_debug("Call", self._call, stop=_stop)
 
         # based on the "call type", return the requested data
-        if self._call == 'value':
+        if self._call == "value":
             return self._value
-        elif self._call == 'element':
+        if self._call == "element":
             return self._element
-        elif self._call == 'type':
+        if self._call == "type":
             return self._type
-        elif self._call == 'depth':
+        if self._call == "depth":
             return self._depth
-        elif self._call == 'map':
+        if self._call == "map":
             return self._map
-        elif self._call == 'json':
+        if self._call == "json":
             return self._json
-        elif self._call == 'yaml':
+        if self._call == "yaml":
             return self._yaml
-        else:
-            # TODO: load warnings of bad call
-            return None
+        # Invalid call type - issue warning and return None
+        from ..error_handling import handle_api_usage_error
+
+        valid_calls = ["value", "element", "type", "depth", "map", "json", "yaml"]
+        handle_api_usage_error(
+            operation="Call type",
+            provided_value=self._call,
+            valid_options=valid_calls,
+            debug=self._debug,
+        )
+        return None
 
     # INTERNAL READ-ONLY PROPERTIES
     @property
@@ -206,6 +273,7 @@ class NotationBase(NotationRepresentation):
     def _value(self) -> Union[dict, list, None]:
         """
         The cleaned value(s), i.e. keys are converted to lower case snake.
+        Now computed on-demand for memory efficiency.
 
         Returns:
             Union[dict, list, None]
@@ -223,6 +291,48 @@ class NotationBase(NotationRepresentation):
         return type(self._value)
 
     @property
+    def _cleaned_value(self) -> Union[dict, list, None]:
+        """
+        Compute cleaned value on demand for memory efficiency.
+
+        Returns:
+            Union[dict, list, None]
+        """
+        return self._get_cleaned_value()
+
+    def _get_cleaned_value(self) -> Union[dict, list, None]:
+        """
+        Helper method to compute cleaned value on demand.
+        Override in child classes for specific behavior.
+
+        Returns:
+            Union[dict, list, None]
+        """
+        return self._raw_value
+
+    def _create_child(self, value: Union[dict, list, Any]) -> "NotationBase":
+        """
+        Factory method for creating child notation objects.
+
+        Parameters:
+            value: The raw value to wrap
+
+        Returns:
+            NotationBase: The appropriate notation object
+        """
+        if isinstance(value, dict):
+            from .notation_structures import NotationObject
+
+            return NotationObject(value, self._depth, **self._kwargs)
+        if isinstance(value, list):
+            from .notation_structures import NotationArray
+
+            return NotationArray(value, self._depth, **self._kwargs)
+        from .notation_primitive import NotationPrimitive
+
+        return NotationPrimitive(value, self._depth, **self._kwargs)
+
+    @property
     def _map(self) -> Union[dict, list, None]:
         """
         TBD
@@ -238,27 +348,38 @@ class NotationBase(NotationRepresentation):
         Serialize the value to YAML format. Returns The YAML string if value is
         dict/list, else the `element` value of the NotationPrimitive.
 
+        Handles None values by returning them in the standard element format.
+
         Returns:
             Union[str, None]
         """
-        if isinstance(self._value, dict) or isinstance(self._value, list):
-            return yaml.dump(self._value, sort_keys=False, Dumper=NotationDumper).rstrip()
-        else:
-            return yaml.dump(self._element, sort_keys=False, Dumper=NotationDumper).rstrip()
-        # TODO: handle None
+        if self._value is None:
+            return yaml.dump(
+                self._element, sort_keys=False, Dumper=NotationDumper
+            ).rstrip()
+        if isinstance(self._value, (dict, list)):
+            return yaml.dump(
+                self._value, sort_keys=False, Dumper=NotationDumper
+            ).rstrip()
+        return yaml.dump(self._element, sort_keys=False, Dumper=NotationDumper).rstrip()
 
     @property
     def _json(self) -> Union[str, None]:
         """
         Serialize the value to JSON format. Returns the JSON string if value is
-        dict/list, else None.
+        dict/list, else the element format for primitives including None.
+
+        Handles None values by returning them in JSON format.
 
         Returns:
-            str
+            Union[str, None]
         """
-        return json.dumps(self._value, indent=self._indent)
-        # TODO: handle None
+        # Get indent from kwargs or use default
+        indent = getattr(self, "_indent", 3)
 
-
-if __name__ == '__main__':
-    pass
+        if self._value is None:
+            return json.dumps(self._element, indent=indent)
+        if isinstance(self._value, (dict, list)):
+            return json.dumps(self._value, indent=indent)
+        # For primitives, return the element format for consistency
+        return json.dumps(self._element, indent=indent)

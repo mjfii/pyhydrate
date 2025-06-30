@@ -23,9 +23,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install build
         pip install -r requirements.txt
+        pip install ruff
+    - name: Run linting
+      run: |
+        ruff check pyhydrate/ tests/
+        ruff format --check pyhydrate/ tests/
     - name: Run tests
       run: |
-        python -m unittest tests/dict_get_tests.py
-        python -m unittest tests/list_get_tests.py
-        python -m unittest tests/call_tests.py
-        python -m unittest tests/primitive_get_tests.py
+        python -m unittest discover -s tests/ -p "*_tests.py"
