@@ -1,3 +1,4 @@
 # src dependencies
 typing_extensions
 pyyaml
+ruff
