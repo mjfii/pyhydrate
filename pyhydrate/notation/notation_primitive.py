@@ -97,7 +97,3 @@ class NotationPrimitive(NotationBase):
         """
         self._print_debug("Slice", index)
         return NotationPrimitive(None, self._depth, **self._kwargs)
-
-
-if __name__ == "__main__":
-    pass

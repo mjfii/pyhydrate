@@ -31,7 +31,3 @@ class NotationDumper(yaml.Dumper):
         # Note: indentless parameter is unused but required for parent class API compatibility
         _ = indentless  # Explicitly acknowledge unused parameter
         return super().increase_indent(flow=flow, indentless=False)
-
-
-if __name__ == "__main__":
-    pass

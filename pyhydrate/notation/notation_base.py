@@ -451,7 +451,3 @@ class NotationBase(object):
             return json.dumps(self._value, indent=indent)
         # For primitives, return the element format for consistency
         return json.dumps(self._element, indent=indent)
-
-
-if __name__ == "__main__":
-    pass

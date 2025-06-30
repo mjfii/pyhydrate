@@ -280,7 +280,3 @@ class NotationArray(NotationBase):
 
             # Don't cache error results as they might be valid later
             return NotationPrimitive(None, self._depth, **self._kwargs)
-
-
-if __name__ == "__main__":
-    pass
