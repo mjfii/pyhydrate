@@ -60,6 +60,18 @@ class PyHydrate(NotationRepresentation):
         self._print_root()
         return self._structure("yaml")
 
+    def __int__(self) -> int:
+        """Convert the wrapped value to int."""
+        return int(self._structure)
+
+    def __float__(self) -> float:
+        """Convert the wrapped value to float."""
+        return float(self._structure)
+
+    def __bool__(self) -> bool:
+        """Convert the wrapped value to bool."""
+        return bool(self._structure)
+
     def __getattr__(
         self, key: str
     ) -> Union[NotationArray, NotationObject, NotationPrimitive, None]:
