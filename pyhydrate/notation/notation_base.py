@@ -11,6 +11,7 @@ Child classes inherit from NotationBase to get this base functionality.
 import json
 import re
 import textwrap
+import warnings
 from typing import Any, Pattern, Union
 
 import yaml
@@ -261,6 +262,11 @@ class NotationBase(object):
             - 'element': The _element attribute.
             - 'type': The object's type.
             - 'depth': The recursion depth.
+            - 'map': The key mapping (when implemented).
+            - 'json': JSON string representation.
+            - 'yaml': YAML string representation.
+
+        Invalid call types will issue a UserWarning and return None.
 
         Utilized key/values for kwargs are:
             - debug: TODO:
@@ -271,7 +277,10 @@ class NotationBase(object):
             **kwargs: Additional options.
 
         Returns:
-            Union[dict, list, str, int, float, bool, type, None]
+            Union[dict, list, str, int, float, bool, type, None]: The requested value or None for invalid call types.
+
+        Warnings:
+            UserWarning: When an invalid call type is provided.
         """
         _stop: bool = kwargs.get("stop", False)
 
@@ -302,7 +311,13 @@ class NotationBase(object):
             return self._json
         if self._call == "yaml":
             return self._yaml
-        # TODO: load warnings of bad call
+        # Invalid call type - issue warning and return None
+        valid_calls = ["value", "element", "type", "depth", "map", "json", "yaml"]
+        _warning: str = (
+            f"Invalid call type '{self._call}'. "
+            f"Valid options are: {', '.join(valid_calls)}"
+        )
+        warnings.warn(_warning, stacklevel=2)
         return None
 
     # INTERNAL READ-ONLY PROPERTIES
