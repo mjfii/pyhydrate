@@ -4,6 +4,7 @@ Provides a custom YAML dumper for Notation structures.
 This module contains the NotationDumper class which is a subclass of
 yaml.Dumper. It overrides YAML indentation.
 """
+
 import yaml
 
 
@@ -26,5 +27,5 @@ class NotationDumper(yaml.Dumper):
         return super().increase_indent(flow=flow, indentless=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

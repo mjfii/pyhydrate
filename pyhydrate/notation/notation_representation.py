@@ -8,9 +8,10 @@ and other classes that inherit from it.
 The goal is to standardize the `repr` output for enhanced debugging
 and inspection of nested Notation data structures.
 """
-from typing import Union
-import textwrap
+
 import json
+import textwrap
+from typing import Union
 
 
 class NotationRepresentation(object):
@@ -30,8 +31,8 @@ class NotationRepresentation(object):
     """
 
     # CLASS CONSTANTS
-    _repr_key: str = 'PyHydrate'
-    _idk: str = r'¯\_(ツ)_/¯'
+    _repr_key: str = "PyHydrate"
+    _idk: str = r"¯\_(ツ)_/¯"
 
     # CLASS DEFAULT PARAMETERS
     _debug: bool = False
@@ -47,7 +48,7 @@ class NotationRepresentation(object):
 
         # Try to get the raw value from the object
         try:
-            _working_value: Union[str, None] = self.__dict__.get('_raw_value', None)
+            _working_value: Union[str, None] = self.__dict__.get("_raw_value", None)
         except AttributeError:
             return f"{self._repr_key}(None)"
 
@@ -55,7 +56,9 @@ class NotationRepresentation(object):
         # TODO: is this necessary?
         if not _working_value:
             try:
-                _working_value = self.__dict__.get('_structure').__dict__.get('_raw_value', None)
+                _working_value = self.__dict__.get("_structure").__dict__.get(
+                    "_raw_value", None
+                )
             except AttributeError:
                 return f"{self._repr_key}(None)"
 
@@ -65,23 +68,23 @@ class NotationRepresentation(object):
             if isinstance(_working_value, str):
                 return f"{self._repr_key}('{_working_value}')"
             # return the non-string unquoted primitive
-            elif (isinstance(_working_value, bool) or
-                  isinstance(_working_value, float) or
-                  isinstance(_working_value, int)):
+            if (
+                isinstance(_working_value, (bool, float, int))
+            ):
                 return f"{self._repr_key}({_working_value})"
             # return an indented string
             # TODO: this is incomplete, the structure should be quoted and escaped
-            elif isinstance(_working_value, dict) or isinstance(_working_value, list):
-                _return_value: str = textwrap.indent(json.dumps(_working_value, indent=3), 3 * ' ')
+            if isinstance(_working_value, (dict, list)):
+                _return_value: str = textwrap.indent(
+                    json.dumps(_working_value, indent=3), 3 * " "
+                )
                 return f"{self._repr_key}(\n{_return_value}\n)"
             # the primitive or structure is not handled, a warning should exist,
             # return and unknown representation
-            else:
-                return f"{self._repr_key}('{self._idk}')"
+            return f"{self._repr_key}('{self._idk}')"
         # a known representation does not exist, return None/unknown
-        else:
-            return f"{self._repr_key}(None)"
+        return f"{self._repr_key}(None)"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

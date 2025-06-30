@@ -9,11 +9,14 @@ NotationObjects, NotationArrays, and NotationPrimitives.
 
 NotationArray wraps a list structure with the same nested elements.
 """
+
+import warnings
 from typing import Union
+
 from typing_extensions import Self
+
 from .notation_base import NotationBase
 from .notation_primitive import NotationPrimitive
-import warnings
 
 
 class NotationObject(NotationBase):
@@ -40,7 +43,7 @@ class NotationObject(NotationBase):
 
         # set the inherited class variables
         self._depth = depth + 1
-        self._debug = self._kwargs.get('debug', False)
+        self._debug = self._kwargs.get("debug", False)
 
         if isinstance(value, dict):
             self._raw_value = value
@@ -58,17 +61,21 @@ class NotationObject(NotationBase):
                     _hydrated[_casted_key] = NotationArray(_v, self._depth, **kwargs)
                     _cleaned[_casted_key] = _hydrated[_casted_key](stop=True)
                 else:
-                    _hydrated[_casted_key] = NotationPrimitive(_v, self._depth, **kwargs)
+                    _hydrated[_casted_key] = NotationPrimitive(
+                        _v, self._depth, **kwargs
+                    )
                     _cleaned[_casted_key] = _hydrated[_casted_key](stop=True)
 
             self._cleaned_value = _cleaned
             self._hydrated_value = _hydrated
         else:
-            _warning: str = (f"The `{self.__class__.__name__}` class does not support type '{type(value).__name__}'. "
-                             f"`None` value and `NoneType` returned instead.")
-            warnings.warn(_warning)
+            _warning: str = (
+                f"The `{self.__class__.__name__}` class does not support type '{type(value).__name__}'. "
+                f"`None` value and `NoneType` returned instead."
+            )
+            warnings.warn(_warning, stacklevel=2)
 
-    def __getattr__(self, key: str) -> Union[Self, u'NotationArray', NotationPrimitive]:
+    def __getattr__(self, key: str) -> Union[Self, "NotationArray", NotationPrimitive]:
         """
          Get a child element by attribute name.
 
@@ -77,9 +84,11 @@ class NotationObject(NotationBase):
 
         Returns:
             Union[NotationObject, NotationArray, NotationPrimitive]
-         """
-        self._print_debug('Get', key)
-        return self._hydrated_value.get(key, NotationPrimitive(None, self._depth, **self._kwargs))
+        """
+        self._print_debug("Get", key)
+        return self._hydrated_value.get(
+            key, NotationPrimitive(None, self._depth, **self._kwargs)
+        )
 
     def __getitem__(self, index: int) -> NotationPrimitive:
         """
@@ -91,7 +100,7 @@ class NotationObject(NotationBase):
         Returns:
             NotationPrimitive(None)
         """
-        self._print_debug('Slice', index)
+        self._print_debug("Slice", index)
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
 
@@ -118,7 +127,7 @@ class NotationArray(NotationBase):
 
         # set the inherited class variables
         self._depth = depth + 1
-        self._debug = self._kwargs.get('debug', False)
+        self._debug = self._kwargs.get("debug", False)
 
         if isinstance(value, list):
             self._raw_value = value
@@ -136,9 +145,11 @@ class NotationArray(NotationBase):
             self._hydrated_value = _hydrated
         else:
             # self._value = NotationValue(None)
-            _warning: str = (f"The `{self.__class__.__name__}` class does not support type '{type(value).__name__}'. "
-                             f"`None` value and `NoneType` returned instead.")
-            warnings.warn(_warning)
+            _warning: str = (
+                f"The `{self.__class__.__name__}` class does not support type '{type(value).__name__}'. "
+                f"`None` value and `NoneType` returned instead."
+            )
+            warnings.warn(_warning, stacklevel=2)
 
     def __getattr__(self, key: str) -> NotationPrimitive:
         """
@@ -150,7 +161,7 @@ class NotationArray(NotationBase):
         Returns:
             NotationPrimitive
         """
-        self._print_debug('Get', key)
+        self._print_debug("Get", key)
         return NotationPrimitive(None, self._depth, **self._kwargs)
 
     def __getitem__(self, index: int) -> Union[NotationObject, Self, NotationPrimitive]:
@@ -163,20 +174,20 @@ class NotationArray(NotationBase):
         Returns:
             Union[NotationObject, NotationArray, NotationPrimitive]
         """
-        self._print_debug('Slice', index)
+        self._print_debug("Slice", index)
 
         try:
             return self._hydrated_value[int(index)]
         except IndexError:
-            print('index error')
+            print("index error")
             return NotationPrimitive(None, self._depth, **self._kwargs)
         except TypeError:
-            print('type error')
+            print("type error")
             return NotationPrimitive(None, self._depth, **self._kwargs)
         except ValueError:
-            print('value error')
+            print("value error")
             return NotationPrimitive(None, self._depth, **self._kwargs)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
