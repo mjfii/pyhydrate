@@ -194,6 +194,24 @@ is_active = bool(data.active()) # True
 
 This project is licensed under the MIT License - see the [LICENSE](license) file for details.
 
+## Demo
+
+See a comprehensive demonstration of all PyHydrate features:
+
+```bash
+python demo.py
+```
+
+This interactive demo showcases:
+- Complex data structures with mixed key formats  
+- All output formats (JSON, YAML, TOML, element, type)
+- Array access and negative indexing
+- String format detection and file loading
+- Graceful error handling and warning system
+- Magic methods and type conversion
+- Lazy loading performance with actual proof
+- Complete feature overview
+
 ## Contributing
 
 For development setup, testing guidelines, and contribution instructions, see [CONTRIBUTING.md](.github/CONTRIBUTING.md).

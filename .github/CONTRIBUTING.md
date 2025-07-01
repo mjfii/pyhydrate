@@ -95,9 +95,9 @@ python -m build
 
 ### Running Examples
 
-Execute the main demo:
+Execute the comprehensive demo:
 ```bash
-python main.py
+python demo.py
 ```
 
 ## Project Architecture
