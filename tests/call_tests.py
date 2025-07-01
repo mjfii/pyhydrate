@@ -26,6 +26,39 @@ class CallMethods(unittest.TestCase):
             == '{\n   "test_string": "test string",\n   "test_integer": 1,\n   "test_float": 2.345,\n   "test_bool": true\n}'
         )
 
+    def test_toml_string(self) -> None:
+        """Test TOML string serialization of primitive values."""
+        print("\n")
+        result = self._data.level_one.level_two.level_3.test_integer("toml")
+        assert "int = 1" in result
+
+    def test_toml_string_primitive(self) -> None:
+        """Test TOML serialization of string primitive."""
+        print("\n")
+        result = self._data.level_one.level_two.level_3.test_string("toml")
+        assert 'str = "test string"' in result
+
+    def test_toml_structure(self) -> None:
+        """Test TOML string serialization of dict structures."""
+        print("\n")
+        result = self._data.level_one.level_two.level_3("toml")
+        # Should contain all the keys from the nested structure
+        assert "test_string" in result
+        assert "test_integer = 1" in result
+        assert "test_float = 2.345" in result
+        assert "test_bool = true" in result
+
+    def test_toml_list_wrapped(self) -> None:
+        """Test TOML serialization wraps lists in root table."""
+        print("\n")
+        array_data = pyhy.PyHydrate([1, 2, 3])
+        result = array_data("toml")
+        # Lists should be wrapped in a 'data' key for TOML compatibility
+        assert "data = [" in result
+        assert "1" in result
+        assert "2" in result
+        assert "3" in result
+
     def test_invalid_call_type_warning(self) -> None:
         """Test that invalid call types issue a warning."""
         print("\n")
@@ -39,7 +72,7 @@ class CallMethods(unittest.TestCase):
             assert "Call type failed with str" in str(w[0].message)
             assert "invalid_call" in str(w[0].message)
             assert (
-                "Valid options are: value, element, type, depth, map, json, yaml"
+                "Valid options are: value, element, type, depth, map, json, yaml, toml"
                 in str(w[0].message)
             )
 
@@ -59,7 +92,7 @@ class CallMethods(unittest.TestCase):
             assert "Call type failed with str" in str(w[0].message)
             assert "bad_call" in str(w[0].message)
             assert (
-                "Valid options are: value, element, type, depth, map, json, yaml"
+                "Valid options are: value, element, type, depth, map, json, yaml, toml"
                 in str(w[0].message)
             )
 
