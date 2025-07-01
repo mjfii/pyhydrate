@@ -2,4 +2,4 @@
 typing_extensions
 pyyaml
 tomli
-ruff
+ruff==0.12.1
