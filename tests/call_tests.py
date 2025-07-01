@@ -66,6 +66,59 @@ class CallMethods(unittest.TestCase):
             # Check that None is returned
             assert result is None
 
+    def test_map_call_on_object(self) -> None:
+        """Test that map call returns key mappings for objects."""
+        print("\n")
+        result = self._data.level_one("map")
+
+        # Should return a dictionary with key mappings
+        assert isinstance(result, dict)
+        # Should have the mapped key for level_two
+        assert "level_two" in result
+        assert result["level_two"] == "levelTWO"
+
+    def test_map_call_on_nested_object(self) -> None:
+        """Test that map call works on nested objects."""
+        print("\n")
+        result = self._data.level_one.level_two.level_3("map")
+
+        # Should return a dictionary with key mappings
+        assert isinstance(result, dict)
+        # Should have mapped keys for the nested structure
+        expected_mappings = {
+            "test_string": "TestString",
+            "test_integer": "testInteger",
+            "test_float": "test_Float",
+            "test_bool": "Test_BOOL",
+        }
+        for clean_key, original_key in expected_mappings.items():
+            assert clean_key in result
+            assert result[clean_key] == original_key
+
+    def test_map_call_on_primitive(self) -> None:
+        """Test that map call returns None for primitive values."""
+        print("\n")
+        result = self._data.level_one.level_two.level_3.test_integer("map")
+
+        # Primitives should return None for map calls (wrapped in NotationPrimitive)
+        from pyhydrate.notation.notation_primitive import NotationPrimitive
+
+        assert isinstance(result, NotationPrimitive)
+        assert result() is None
+
+    def test_map_call_on_array(self) -> None:
+        """Test that map call returns None for array values."""
+        print("\n")
+        # Create array data for testing
+        array_data = pyhy.PyHydrate([1, 2, 3])
+        result = array_data("map")
+
+        # Arrays should return None for map calls (wrapped in NotationPrimitive)
+        from pyhydrate.notation.notation_primitive import NotationPrimitive
+
+        assert isinstance(result, NotationPrimitive)
+        assert result() is None
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -332,13 +332,20 @@ class NotationBase(object):
         return NotationPrimitive(value, self._depth, **self._kwargs)
 
     @property
-    def _map(self) -> Union[dict, list, None]:
+    def _map(self) -> Union[dict, None]:
         """
-        TBD
+        Returns the key mapping dictionary for objects, or None for other types.
+
+        For NotationObject instances, returns a dictionary mapping cleaned keys
+        (snake_case) to their original keys (camelCase, kebab-case, etc.).
+        For other types (arrays, primitives), returns None.
 
         Returns:
-            TBD
+            Union[dict, None]: Key mappings dict for objects, None otherwise
         """
+        # Check if this instance has key mappings (NotationObject)
+        if hasattr(self, "_key_mappings"):
+            return getattr(self, "_key_mappings", None)
         return None
 
     @property
