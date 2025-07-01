@@ -1,0 +1,27 @@
+# Documentation dependencies for PyHydrate
+# Used by Read the Docs for building documentation
+
+# Core Sphinx dependencies
+sphinx>=7.0.0
+sphinx-rtd-theme>=2.0.0
+myst-parser>=2.0.0
+
+# Sphinx extensions for better documentation
+sphinx-autodoc-typehints>=1.24.0
+sphinx-copybutton>=0.5.2
+
+# For generating API documentation
+sphinx-autosummary-accessors>=2023.4.0
+
+# Markdown support
+myst-parser[linkify]>=2.0.0
+
+# For better type hint rendering
+sphinx-autodoc-typehints>=1.24.0
+
+# Theme and styling
+sphinx-rtd-theme>=2.0.0
+
+# Required project dependencies (also in requirements.txt)
+typing-extensions>=4.0.0
+pyyaml>=6.0
