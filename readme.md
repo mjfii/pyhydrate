@@ -62,7 +62,7 @@ print(_demo.level_one.level_two)
 ```
 
 Then access any level of the hydration by making a call to the class. 
-Valid values are: <empty >, 'value', 'element', 'type', 'depth', 'map',
+Valid values are: <empty>, 'value', 'element', 'type', 'depth', 'map',
 'json', and 'yaml'.  See nomenclature below.
 
 ```python
