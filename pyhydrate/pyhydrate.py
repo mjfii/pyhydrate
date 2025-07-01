@@ -50,6 +50,7 @@ import contextlib
 import json
 import sys
 from json import JSONDecodeError
+from pathlib import Path
 from typing import Any, Union
 
 import yaml
@@ -136,18 +137,60 @@ class PyHydrate(NotationBase):
                 f"Root access: {self.__class__.__name__} -> {type(self._raw_value).__name__}"
             )
 
+    def _load_from_path(self, file_path: Path) -> Any:
+        """
+        Load data from a file path with automatic format detection.
+
+        Determines the file format based on extension and loads the content
+        using the appropriate parser. Supports JSON, YAML, and TOML formats.
+
+        Args:
+            file_path: Path to the file to load
+
+        Returns:
+            Any: Parsed data from the file
+
+        Raises:
+            FileNotFoundError: If the file does not exist
+            ValueError: If the file extension is not supported
+        """
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        # Get file extension for format detection
+        extension = file_path.suffix.lower()
+        content = file_path.read_text(encoding="utf-8")
+
+        if extension == ".json":
+            return json.loads(content)
+        if extension in (".yaml", ".yml"):
+            return yaml.safe_load(content)
+        if extension == ".toml":
+            if tomllib is None:
+                raise ValueError(
+                    "TOML support not available. Install tomli for Python < 3.11"
+                )
+            return tomllib.loads(content)
+        raise ValueError(
+            f"Unsupported file extension: {extension}. "
+            f"Supported formats: .json, .yaml, .yml, .toml"
+        )
+
     # MAGIC METHODS
     def __init__(
         self,
-        source_value: Union[dict, list, str, float, bool, None],
+        source_value: Union[dict, list, str, float, bool, None] = None,
+        *,
+        path: Union[str, Path, None] = None,
         **kwargs: Any,
     ) -> None:
         """
         Initialize PyHydrate with automatic data type detection and parsing.
 
-        The constructor attempts to parse string inputs as JSON, TOML, then YAML
-        in that order. It then creates the appropriate notation wrapper based
-        on the detected or provided data type.
+        The constructor can accept either direct data or a file path. For file paths,
+        it automatically detects the format based on file extension (.json, .yaml,
+        .yml, .toml) and loads the content appropriately. String inputs are parsed
+        as JSON, TOML, then YAML in that order.
 
         Args:
             source_value: Input data of any supported type:
@@ -155,13 +198,28 @@ class PyHydrate(NotationBase):
                 - list: Wrapped in NotationArray
                 - str: Parsed as JSON/TOML/YAML, then wrapped appropriately
                 - int/float/bool/None: Wrapped in NotationPrimitive
+                - If None and path is provided, data will be loaded from file
+            path: Path to a file containing data to load:
+                - Supports .json, .yaml, .yml, .toml file extensions
+                - Automatically detects format from extension
+                - Takes precedence over source_value if both provided
             **kwargs: Additional options:
                 - debug (bool): Enable debug logging (default: False)
                 - Other options passed to notation wrapper classes
 
+        Raises:
+            ValueError: If neither source_value nor path is provided
+            FileNotFoundError: If the specified path does not exist
+            ValueError: If file extension is not supported
+
         Examples:
             >>> # Dictionary input
             >>> data = PyHydrate({"key": "value"})
+
+            >>> # File path input
+            >>> data = PyHydrate(path="config.json")
+            >>> data = PyHydrate(path="settings.yaml")
+            >>> data = PyHydrate(path="data.toml")
 
             >>> # JSON string input (auto-parsed)
             >>> data = PyHydrate('{"key": "value"}')
@@ -171,8 +229,14 @@ class PyHydrate(NotationBase):
 
             >>> # Debug mode
             >>> data = PyHydrate(source, debug=True)
+            >>> data = PyHydrate(path="config.json", debug=True)
         """
         self._debug = kwargs.get("debug", False)
+
+        # Handle file path input
+        if path is not None:
+            source_value = self._load_from_path(Path(path))
+        # Note: source_value=None is a valid value (for None primitives)
 
         # try to translate string to json, if we fail, just quit attempt
         if isinstance(source_value, str):

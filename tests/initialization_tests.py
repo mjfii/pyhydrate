@@ -195,6 +195,109 @@ class InitializationTests(unittest.TestCase):
         assert data[5].nested() == "dict"
         assert data[6][0]() == "nested"
 
+    def test_init_with_json_path(self) -> None:
+        """Test initialization with a JSON file path."""
+        json_path = self.test_data_path / "init-test-data.json"
+        data = PyHydrate(path=json_path)
+
+        # Test basic access
+        assert data.name() == "John Doe"
+        assert data.age() == 30
+        assert data.settings.theme() == "dark"
+        assert data.hobbies[0]() == "reading"
+
+        # Test the structure matches expected data
+        assert isinstance(data._structure._value, dict)
+
+    def test_init_with_yaml_path(self) -> None:
+        """Test initialization with a YAML file path."""
+        yaml_path = self.test_data_path / "init-test-data.yaml"
+        data = PyHydrate(path=yaml_path)
+
+        # Test basic access
+        assert data.name() == "John Doe"
+        assert data.age() == 30
+        assert data.settings.theme() == "dark"
+        assert data.hobbies[0]() == "reading"
+
+        # Test the structure matches expected data
+        assert isinstance(data._structure._value, dict)
+
+    def test_init_with_toml_path(self) -> None:
+        """Test initialization with a TOML file path."""
+        toml_path = self.test_data_path / "init-test-data.toml"
+        data = PyHydrate(path=toml_path)
+
+        # Test basic access
+        assert data.name() == "John Doe"
+        assert data.age() == 30
+        assert data.settings.theme() == "dark"
+        assert data.hobbies[0]() == "reading"
+
+        # Test the structure matches expected data
+        assert isinstance(data._structure._value, dict)
+
+    def test_init_with_string_path(self) -> None:
+        """Test initialization with a string file path."""
+        json_path = str(self.test_data_path / "init-test-data.json")
+        data = PyHydrate(path=json_path)
+
+        # Test basic access
+        assert data.name() == "John Doe"
+        assert data.age() == 30
+
+    def test_path_file_not_found_error(self) -> None:
+        """Test FileNotFoundError when path doesn't exist."""
+        with self.assertRaises(FileNotFoundError) as context:
+            PyHydrate(path="nonexistent_file.json")
+
+        assert "File not found" in str(context.exception)
+
+    def test_path_unsupported_extension_error(self) -> None:
+        """Test ValueError for unsupported file extensions."""
+        # Create a temporary file with unsupported extension
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", delete=False) as tmp:
+            tmp.write('{"test": "data"}')
+            tmp_path = tmp.name
+
+        try:
+            with self.assertRaises(ValueError) as context:
+                PyHydrate(path=tmp_path)
+
+            assert "Unsupported file extension" in str(context.exception)
+            assert ".txt" in str(context.exception)
+        finally:
+            Path(tmp_path).unlink()
+
+    def test_path_parameter_validation(self) -> None:
+        """Test that PyHydrate() with no args defaults to None primitive."""
+        # PyHydrate() with no arguments should default to source_value=None
+        data = PyHydrate()
+        assert data() is None
+        assert isinstance(data._structure._value, type(None))
+
+    def test_path_takes_precedence_over_source_value(self) -> None:
+        """Test that path parameter takes precedence over source_value."""
+        json_path = self.test_data_path / "init-test-data.json"
+        data = PyHydrate({"fake": "data"}, path=json_path)
+
+        # Should load from path, not the provided source_value
+        assert data.name() == "John Doe"  # From file
+        # Check that the fake key from source_value is not accessible
+        fake_result = data.fake()
+        assert fake_result is None  # fake key should not exist
+
+    def test_path_with_debug_mode(self) -> None:
+        """Test path loading with debug mode enabled."""
+        json_path = self.test_data_path / "init-test-data.json"
+        data = PyHydrate(path=json_path, debug=True)
+
+        # Test basic functionality still works with debug
+        assert data.name() == "John Doe"
+        assert data.age() == 30
+
 
 if __name__ == "__main__":
     unittest.main()

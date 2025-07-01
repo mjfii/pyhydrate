@@ -10,10 +10,26 @@ Child classes inherit from NotationBase to get this base functionality.
 
 import json
 import re
+import sys
 import textwrap
 from typing import Any, Pattern, Union
 
 import yaml
+
+# Handle TOML imports for different Python versions
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        tomllib = None
+
+# TOML writer
+try:
+    import toml
+except ImportError:
+    toml = None
 
 from .notation_dumper import NotationDumper
 
@@ -198,6 +214,7 @@ class NotationBase(object):
             - 'map': The key mapping (when implemented).
             - 'json': JSON string representation.
             - 'yaml': YAML string representation.
+            - 'toml': TOML string representation.
 
         Invalid call types will issue a UserWarning and return None.
 
@@ -244,10 +261,21 @@ class NotationBase(object):
             return self._json
         if self._call == "yaml":
             return self._yaml
+        if self._call == "toml":
+            return self._toml
         # Invalid call type - issue warning and return None
         from ..error_handling import handle_api_usage_error
 
-        valid_calls = ["value", "element", "type", "depth", "map", "json", "yaml"]
+        valid_calls = [
+            "value",
+            "element",
+            "type",
+            "depth",
+            "map",
+            "json",
+            "yaml",
+            "toml",
+        ]
         handle_api_usage_error(
             operation="Call type",
             provided_value=self._call,
@@ -332,13 +360,20 @@ class NotationBase(object):
         return NotationPrimitive(value, self._depth, **self._kwargs)
 
     @property
-    def _map(self) -> Union[dict, list, None]:
+    def _map(self) -> Union[dict, None]:
         """
-        TBD
+        Returns the key mapping dictionary for objects, or None for other types.
+
+        For NotationObject instances, returns a dictionary mapping cleaned keys
+        (snake_case) to their original keys (camelCase, kebab-case, etc.).
+        For other types (arrays, primitives), returns None.
 
         Returns:
-            TBD
+            Union[dict, None]: Key mappings dict for objects, None otherwise
         """
+        # Check if this instance has key mappings (NotationObject)
+        if hasattr(self, "_key_mappings"):
+            return getattr(self, "_key_mappings", None)
         return None
 
     @property
@@ -382,3 +417,41 @@ class NotationBase(object):
             return json.dumps(self._value, indent=indent)
         # For primitives, return the element format for consistency
         return json.dumps(self._element, indent=indent)
+
+    @property
+    def _toml(self) -> Union[str, None]:
+        """
+        Serialize the value to TOML format. Returns the TOML string if value is
+        dict/list, else the element format for primitives including None.
+
+        Handles None values by returning them in TOML format.
+        Only dict objects can be serialized to TOML (TOML specification requirement).
+
+        Returns:
+            Union[str, None]
+        """
+        if toml is None:
+            from ..error_handling import handle_api_usage_error
+
+            handle_api_usage_error(
+                operation="TOML serialization",
+                provided_value="unavailable",
+                valid_options=["install toml library: pip install toml"],
+                debug=self._debug,
+            )
+            return None
+
+        if self._value is None:
+            # TOML doesn't support None, return element format if it's a dict
+            if isinstance(self._element, dict):
+                return toml.dumps(self._element)
+            return None
+        if isinstance(self._value, dict):
+            return toml.dumps(self._value)
+        if isinstance(self._value, list):
+            # TOML requires a root table, wrap list in a dict
+            return toml.dumps({"data": self._value})
+        # For primitives, return the element format if it's a dict
+        if isinstance(self._element, dict):
+            return toml.dumps(self._element)
+        return None
