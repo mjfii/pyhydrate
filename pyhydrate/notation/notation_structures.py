@@ -293,7 +293,9 @@ class NotationArray(NotationBase):
                 return self._hydrated_cache[int_index]
 
             # Check bounds (allow negative indexing like Python lists)
-            if self._raw_value is None or not (-len(self._raw_value) <= int_index < len(self._raw_value)):
+            if self._raw_value is None or not (
+                -len(self._raw_value) <= int_index < len(self._raw_value)
+            ):
                 raise IndexError("Index out of range")
 
             # Lazy create the child object
