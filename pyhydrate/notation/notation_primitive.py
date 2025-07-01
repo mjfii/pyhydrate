@@ -11,6 +11,8 @@ from typing import Any, ClassVar, List, Union
 
 from typing_extensions import Self
 
+# Import at top level to avoid PLC0415
+from ..error_handling import handle_type_conversion_error
 from .notation_base import NotationBase
 
 
@@ -66,8 +68,6 @@ class NotationPrimitive(NotationBase):
             self._raw_value = value
         else:
             self._raw_value = None
-            from ..error_handling import handle_type_conversion_error
-
             handle_type_conversion_error(
                 value=value,
                 target_type=type(None),

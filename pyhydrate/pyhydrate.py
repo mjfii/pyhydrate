@@ -63,6 +63,8 @@ else:
     except ImportError:
         tomllib = None
 
+# Import at top level to avoid PLC0415
+from .error_handling import setup_logger
 from .notation import (
     NotationArray,
     NotationObject,
@@ -127,8 +129,6 @@ class PyHydrate(NotationBase):
         showing the class name and underlying data type.
         """
         if self._debug:
-            from .error_handling import setup_logger
-
             logger = setup_logger(
                 f"{self.__class__.__module__}.{self.__class__.__name__}", debug=True
             )

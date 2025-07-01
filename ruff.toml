@@ -93,6 +93,8 @@ ignore = [
     "B027",
     # Allow boolean positional values in function calls, like `dict.get(... True)`
     "FBT003",
+    # Allow boolean values in Union-typed parameters (data values, not config flags)
+    "FBT001",
     # Ignore checks for possible passwords
     "S105", "S106", "S107",
     # Ignore complexity
@@ -121,6 +123,8 @@ ignore = [
     "TID252",
     # Allow Any in kwargs
     "ANN401",
+    # Allow lazy imports for circular dependency prevention
+    "PLC0415",
     # Allow future annotations for now
     "FA100",
     # Allow exception message literals
