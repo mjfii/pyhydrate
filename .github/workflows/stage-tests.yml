@@ -2,7 +2,7 @@
 name: stage-tests
 
 on:
-  push:
+  pull_request:
     branches: [stage]
 
 permissions:
@@ -23,9 +23,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install build
         pip install -r requirements.txt
+    - name: Run linting
+      run: |
+        ruff check pyhydrate/ tests/
+    - name: Run formatting
+      run: |
+        ruff format --check pyhydrate/ tests/
     - name: Run tests
       run: |
-        python -m unittest tests/dict_get_tests.py
-        python -m unittest tests/list_get_tests.py
-        python -m unittest tests/call_tests.py
-        python -m unittest tests/primitive_get_tests.py
+        python -m unittest discover -s tests/ -p "*_tests.py"

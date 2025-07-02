@@ -1,0 +1,186 @@
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    ".debug",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.8+
+target-version = "py38"
+
+[lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = [
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "W",
+    "B",
+    "I",
+    "N",
+    "UP",
+    "YTT",
+    "ANN",
+    "S",
+    "BLE",
+    "FBT",
+    "A",
+    "COM",
+    "C4",
+    "DTZ",
+    "T10",
+    "EM",
+    "EXE",
+    "FA",
+    "ISC",
+    "ICN",
+    "G",
+    "INP",
+    "PIE",
+    "T20",
+    "PYI",
+    "PT",
+    "Q",
+    "RSE",
+    "RET",
+    "SLF",
+    "SLOT",
+    "SIM",
+    "TID",
+    "TCH",
+    "ARG",
+    "PTH",
+    "ERA",
+    "PD",
+    "PGH",
+    "PL",
+    "TRY",
+    "FLY",
+    "NPY",
+    "PERF",
+    "LOG",
+    "RUF",
+]
+
+ignore = [
+    # Allow non-abstract empty methods in abstract base classes
+    "B027",
+    # Allow boolean positional values in function calls, like `dict.get(... True)`
+    "FBT003",
+    # Allow boolean values in Union-typed parameters (data values, not config flags)
+    "FBT001",
+    # Ignore checks for possible passwords
+    "S105", "S106", "S107",
+    # Ignore complexity
+    "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
+    # Allow print statements
+    "T201",
+    # Allow magic value comparisons
+    "PLR2004",
+    # Allow TODO comments
+    "FIX002",
+    # Allow exception handling without logging
+    "TRY003", "TRY300",
+    # Allow direct raise statements (don't require abstracting to functions)
+    "TRY301",
+    # Allow subprocess calls (controlled pip install)
+    "S603",
+    # Allow subprocess without shell=False
+    "S602",
+    # Allow LRU cache on methods (performance benefit)
+    "B019",
+    # Allow try-except in loops (needed for error handling)
+    "PERF203",
+    # Allow use of assert
+    "S101",
+    # Allow relative imports (common in packages)
+    "TID252",
+    # Allow Any in kwargs
+    "ANN401",
+    # Allow lazy imports for circular dependency prevention
+    "PLC0415",
+    # Allow future annotations for now
+    "FA100",
+    # Allow exception message literals
+    "EM101", "EM102",
+    # Allow f-strings in exception messages
+    "EM102",
+    # Allow whitespace in blank lines in docstrings
+    "W293",
+    # Avoid conflict with formatter
+    "COM812", "ISC001",
+    # Allow unittest.assertRaises instead of pytest.raises (this is a unittest project)
+    "PT027",
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+docstring-code-format = false
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+docstring-code-line-length = "dynamic"
+
+[lint.per-file-ignores]
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = [
+    "PLR2004",
+    "S101",
+    "TID252",
+]
+"*.py" = ["G004", "UP004", "S324"]
+
+[lint.isort]
+known-first-party = ["src"]
+
+[lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[lint.flake8-type-checking]
+strict = false

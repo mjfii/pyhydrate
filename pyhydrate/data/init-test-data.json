@@ -1,0 +1,13 @@
+{
+  "name": "John Doe",
+  "age": 30,
+  "city": "New York",
+  "isActive": true,
+  "balance": 1234.56,
+  "settings": {
+    "theme": "dark",
+    "notifications": true,
+    "privacy_level": 2
+  },
+  "hobbies": ["reading", "swimming", "coding"]
+}

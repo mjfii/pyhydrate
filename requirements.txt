@@ -1,3 +1,6 @@
 # src dependencies
 typing_extensions
 pyyaml
+toml
+tomli
+ruff==0.12.1

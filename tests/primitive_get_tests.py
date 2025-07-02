@@ -1,40 +1,40 @@
 import unittest
+
 import pyhydrate as pyhy
 
 
 class PrimitiveReadMethods(unittest.TestCase):
+    def test_string(self) -> None:
+        print("\n")
+        _data = pyhy.PyHydrate("a string", debug=True)
+        assert _data() == "a string"
 
-    def test_string(self):
-        print('\n')
-        _data = pyhy.PyHydrate('a string', debug=True)
-        self.assertEqual(_data(), 'a string')
-
-    def test_int(self):
-        print('\n')
+    def test_int(self) -> None:
+        print("\n")
         _data = pyhy.PyHydrate(123, debug=True)
-        self.assertEqual(_data(), 123)
+        assert _data() == 123
 
-    def test_float(self):
-        print('\n')
+    def test_float(self) -> None:
+        print("\n")
         _data = pyhy.PyHydrate(456.7890, debug=True)
-        self.assertEqual(_data(), 456.7890)
+        assert _data() == 456.789
 
-    def test_bool(self):
-        print('\n')
+    def test_bool(self) -> None:
+        print("\n")
         _data = pyhy.PyHydrate(True, debug=True)
-        self.assertEqual(_data(), True)
+        assert _data() is True
 
-    def test_none(self):
-        print('\n')
+    def test_none(self) -> None:
+        print("\n")
         _data = pyhy.PyHydrate(None, debug=True)
-        self.assertEqual(_data(), None)
+        assert _data() is None
 
-    def test_dict(self):
-        print('\n')
+    def test_dict(self) -> None:
+        print("\n")
         _data = pyhy.PyHydrate({}, debug=True)
-        self.assertEqual(_data('yaml'), '{}')
+        assert _data("yaml") == "{}"
 
-    def test_list(self):
-        print('\n')
+    def test_list(self) -> None:
+        print("\n")
         _data = pyhy.PyHydrate([], debug=True)
-        self.assertEqual(_data('yaml'), '[]')
+        assert _data("yaml") == "[]"

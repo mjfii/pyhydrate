@@ -1,38 +1,10 @@
-# Contributing to PyHydrate
+# CLAUDE.md
 
-Thank you for your interest in contributing to PyHydrate! This document provides guidelines for setting up a development environment and contributing to the project.
-
-## Development Environment Setup
-
-### Prerequisites
-- Python 3.8 or higher
-- Git
-
-### Setting Up Your Development Environment
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/mjfii/pyhydrate.git
-   cd pyhydrate
-   ```
-
-2. **Create a virtual environment**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # Unix/macOS
-   # or .venv\Scripts\activate  # Windows
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   pip install -e .  # Install in development mode
-   ```
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Development Commands
 
 ### Testing
-
 Run all tests (recommended approach):
 ```bash
 python -m unittest discover -s tests/ -p "*_tests.py"
@@ -62,8 +34,12 @@ python -m unittest tests.call_tests.CallMethods.test_yaml_string
 python -m unittest tests.error_handling_tests.TestErrorHandling
 ```
 
-### Code Quality
+Run a single test file:
+```bash
+python -m unittest tests/dict_get_tests.py
+```
 
+### Code Quality
 Check code style and quality:
 ```bash
 # Linting (identify issues)
@@ -85,7 +61,21 @@ ruff format --check pyhydrate/ tests/
 ruff check pyhydrate/ tests/ --statistics
 ```
 
+### Virtual Environment
+Set up isolated development environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Unix/macOS
+# or .venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+pip install -e .  # Install in development mode
+```
+
 ### Building and Installation
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
 Build the package:
 ```bash
@@ -93,12 +83,119 @@ pip install build
 python -m build
 ```
 
-### Running Examples
-
-Execute the comprehensive demo:
+Install in development mode:
 ```bash
-python demo.py
+pip install -e .
 ```
+
+### Documentation
+Build documentation locally:
+```bash
+# Install documentation dependencies
+pip install -r docs/requirements.txt
+
+# Build HTML documentation
+cd docs
+sphinx-build -b html . _build/html
+
+# Build with verbose output for debugging
+sphinx-build -b html . _build/html -v
+
+# Clean build (remove cached files)
+rm -rf _build/ && sphinx-build -b html . _build/html
+```
+
+View built documentation:
+```bash
+# Open in browser (macOS)
+open docs/_build/html/index.html
+
+# Or serve locally
+cd docs/_build/html && python -m http.server 8000
+# Then visit http://localhost:8000
+```
+
+### Running Examples
+Execute the main demo:
+```bash
+python main.py
+```
+
+### Troubleshooting
+
+**Common Development Issues:**
+
+1. **Import Errors**: If you encounter module import errors, ensure you've installed the package in development mode:
+   ```bash
+   pip install -e .
+   ```
+
+2. **Test Failures**: If tests fail unexpectedly, try running them individually to isolate the issue:
+   ```bash
+   python -m unittest tests.specific_test_file.TestClass.test_method -v
+   ```
+
+3. **Linting Errors**: If ruff reports errors, use auto-fix for safe corrections:
+   ```bash
+   ruff check pyhydrate/ tests/ --fix
+   ```
+
+4. **Virtual Environment Issues**: If dependencies are not found, ensure your virtual environment is activated:
+   ```bash
+   source .venv/bin/activate  # Unix/macOS
+   # or .venv\Scripts\activate  # Windows
+   ```
+
+5. **Debug Mode**: For troubleshooting data access issues, use debug mode:
+   ```python
+   from pyhydrate import PyHydrate
+   data = PyHydrate(your_data, debug=True)
+   result = data.some.nested.access()  # Will show detailed access logging
+   ```
+
+### TOML Support
+
+PyHydrate now supports TOML serialization via the 'toml' callable argument:
+
+```python
+from pyhydrate import PyHydrate
+
+# Dictionary to TOML
+data = PyHydrate({'database': {'host': 'localhost', 'port': 5432, 'name': 'mydb'}})
+print(data('toml'))
+# Output:
+# [database]
+# host = "localhost"
+# port = 5432
+# name = "mydb"
+
+# Nested object to TOML
+print(data.database('toml'))
+# Output: 
+# host = "localhost"
+# port = 5432
+# name = "mydb"
+
+# Primitive to TOML (wrapped in element format)
+print(data.database.host('toml'))
+# Output:
+# str = "localhost"
+
+# Lists are wrapped in a root table for TOML compatibility
+list_data = PyHydrate([{'name': 'item1'}, {'name': 'item2'}])
+print(list_data('toml'))
+# Output:
+# [[data]]
+# name = "item1"
+# 
+# [[data]]
+# name = "item2"
+```
+
+**TOML Limitations:**
+- None values are omitted (TOML specification requirement)
+- Lists require wrapping in a root table
+- Only dict-like structures can be serialized to TOML
 
 ## Project Architecture
 
@@ -191,7 +288,6 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 - Structured logging replaces print statements for better control
 
 ### Data Flow (Lazy Loading Architecture)
-
 1. Input → `PyHydrate` constructor detects type (dict/list/primitive)
 2. Raw value stored → Key mappings pre-computed (snake_case normalization)
 3. **Lazy hydration**: Child objects created only on first access
@@ -205,159 +301,7 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 - Only accessed paths consume memory for hydrated objects
 - Key mappings cached separately from object instances
 
-#### Class Hierarchy
-
-```mermaid
-classDiagram
-    class NotationBase {
-        +__slots__: tuple
-        +_raw_value: Union[dict, list, None]
-        +_cleaned_value: @property
-        +_depth: int
-        +_debug: bool
-        +_cast_key(string: str) str
-        +_create_child(value) NotationBase
-        +_print_debug(request: str, value: Union[str, int])
-        +__str__() str
-        +__repr__() str
-        +__int__() int
-        +__float__() float
-        +__bool__() bool
-        +__call__(*args, **kwargs) Union[dict, list, str, int, float, bool, type, None]
-        +_yaml: str
-        +_json: str
-        +_element: dict
-        +_value: Union[dict, list, None]
-        +_type: type
-    }
-
-    class PyHydrate {
-        +_root_type: Union[type, None]
-        +_structure: Union[NotationArray, NotationObject, NotationPrimitive, None]
-        +_print_root()
-        +__init__(source_value, **kwargs)
-        +__getattr__(key: str)
-        +__getitem__(index: Union[int, None])
-    }
-
-    class NotationObject {
-        +_hydrated_cache: dict
-        +_key_mappings: dict
-        +__init__(value: dict, depth: int, **kwargs)
-        +__getattr__(key: str) Union[NotationObject, NotationArray, NotationPrimitive]
-        +__getitem__(index: int) NotationPrimitive
-        +_get_cleaned_value() dict
-    }
-
-    class NotationArray {
-        +_hydrated_cache: dict
-        +__init__(value: list, depth: int, **kwargs)
-        +__getattr__(key: str) NotationPrimitive
-        +__getitem__(index: int) Union[NotationObject, NotationArray, NotationPrimitive]
-        +_get_cleaned_value() list
-    }
-
-    class NotationPrimitive {
-        +_primitives: List[type]
-        +__init__(value: Union[str, float, bool, None], depth: int, **kwargs)
-        +__getattr__(key: str) NotationPrimitive
-        +__getitem__(index: Any) NotationPrimitive
-    }
-
-    NotationBase <|-- PyHydrate
-    NotationBase <|-- NotationObject
-    NotationBase <|-- NotationArray
-    NotationBase <|-- NotationPrimitive
-
-    PyHydrate --> NotationObject : creates
-    PyHydrate --> NotationArray : creates
-    PyHydrate --> NotationPrimitive : creates
-    NotationObject --> NotationObject : nests
-    NotationObject --> NotationArray : contains
-    NotationObject --> NotationPrimitive : contains
-    NotationArray --> NotationObject : contains
-    NotationArray --> NotationArray : nests
-    NotationArray --> NotationPrimitive : contains
-```
-
-#### Data Flow Architecture (Lazy Loading)
-
-```mermaid
-flowchart TD
-    A[Input Data<br/>dict/list/primitive] --> B[PyHydrate Constructor]
-    B --> C{Type Detection}
-    
-    C -->|dict| D[NotationObject<br/>Store raw + key mappings]
-    C -->|list| E[NotationArray<br/>Store raw data]
-    C -->|primitive| F[NotationPrimitive]
-    
-    D --> G[Pre-compute Key Mappings<br/>camelCase → snake_case]
-    G --> H[Lazy Cache Ready]
-    
-    E --> I[Index Cache Ready]
-    I --> H
-    
-    F --> J[Value Ready]
-    J --> H
-    
-    H --> K[Dot Notation Access]
-    K --> L{Cache Hit?}
-    L -->|Yes| M[Return Cached Object]
-    L -->|No| N[Lazy Create Child]
-    N --> O[Cache & Return]
-    
-    M --> P[Output Formats]
-    O --> P
-    P --> Q[YAML]
-    P --> R[JSON]
-    P --> S[Python Types]
-    P --> T[Element Dict]
-
-    style A fill:#e1f5fe
-    style K fill:#f3e5f5
-    style N fill:#fff3e0
-    style P fill:#e8f5e8
-```
-
-#### Dependency Management
-
-```mermaid
-graph TB
-    subgraph "Core Module"
-        A[pyhydrate/__init__.py]
-        B[pyhydrate/pyhydrate.py]
-    end
-    
-    subgraph "Notation System"
-        C[notation/notation_base.py]
-        D[notation/notation_structures.py]
-        E[notation/notation_primitive.py]
-        F[notation/notation_dumper.py]
-        G[notation/__init__.py]
-    end
-    
-    subgraph "Type System"
-        H[types.py]
-    end
-    
-    A --> B
-    A --> G
-    B --> C
-    G --> D
-    G --> E
-    D --> C
-    E --> C
-    D -.->|lazy import| E
-    C --> F
-    H -.->|TYPE_CHECKING| D
-    H -.->|TYPE_CHECKING| E
-    
-    style C fill:#ffecb3
-    style H fill:#e1f5fe
-```
-
 ### Test Structure
-
 - `tests/dict_get_tests.py` - Dictionary access patterns
 - `tests/list_get_tests.py` - Array/list access patterns  
 - `tests/call_tests.py` - Method call functionality (yaml, json, toml, type, etc.)
@@ -374,7 +318,6 @@ graph TB
 ## Development Best Practices
 
 ### Code Quality Standards
-
 This codebase follows modern Python development practices:
 
 **Linting and Formatting:**
@@ -385,7 +328,7 @@ This codebase follows modern Python development practices:
 - Modern Python patterns: uses `pathlib.Path.read_text()`, keyword-only parameters, and proper type comparisons
 
 **Testing Standards:**
-- Comprehensive test coverage with 121 tests across 9 test files
+- Comprehensive test coverage with 112 tests across 9 test files
 - Uses unittest framework with modern `assert` statements
 - All tests pass after linting and formatting improvements
 - Test data is organized in dedicated `pyhydrate/data/` directory
@@ -423,93 +366,33 @@ This codebase follows modern Python development practices:
 - Test both positive and negative cases (valid and invalid inputs)
 - Include error handling tests for new warning types or error conditions
 
-## Nomenclature
+**Key Implementation Notes:**
+- None handling is properly implemented in YAML/JSON/TOML serialization
+- Magic methods (`__int__`, `__float__`, `__bool__`) enable natural type conversion with proper error handling
+- Debug mode provides detailed traversal logging for troubleshooting
+- The `_cast_key` method handles automatic key normalization (camelCase → snake_case)
+- Error handling uses a mix of warnings and graceful failures (returns None primitives)
+- Type annotations are comprehensive including Union types, Any for dynamic parameters, and ClassVar for class attributes
+- Uses modern Python patterns: keyword-only parameters, `is` for type comparisons, pathlib for file operations
+- Simplified inheritance hierarchy: all classes inherit directly from `NotationBase` (no circular inheritance)
+- Lazy imports prevent circular dependencies between notation classes
+- Centralized type system in `types.py` for clean dependency management
 
-The following nomenclature is used throughout the codebase and documentation:
+### Known Issues & Limitations
+- TODO comments indicate areas for future enhancement
 
-- **Structure**: A complex data element expressed as a dict or list, and any combination of nesting between the two.
-  - **Object**: A collection of key/value pairs, expressed as a dict in the code base.
-  - **Array**: A collection of primitives, Objects, or other Arrays, expressed as a list in the code base.
-- **Primitive**: A simple atomic piece of data with access to its type and underlying value.
-  - **String**: A quoted collection of UTF-8 characters.
-  - **Integer**: A signed integer.
-  - **Float**: A variable length decimal number.
-  - **None**: An unknown Primitive, expressed as `None` with a `NoneType` type.
-- **Values**: A primary data element in the code base used to track the lineage of the transformations in the class.
-  - **Source**: The raw provided document, either a Structure or a Primitive.
-  - **Cleaned**: Similar value to the source, but with the keys in the Objects cleaned to be cast as lower case snake.
-  - **Hydrated**: A collection of nested classes representing Structures and Primitives that allows the dot notation access and graceful failures.
-- **Element**: A single dict output representation, where the key is represented as the type and the value is the Structure
-- **Type**: The Python expression of `type` with respect to the data being interrogated.
-- **Map**: A dict representation of the translations from source Object keys to "cleaned" keys, i.e. the Cleaned Values.
-
-## Troubleshooting
-
-**Common Development Issues:**
-
-1. **Import Errors**: If you encounter module import errors, ensure you've installed the package in development mode:
-   ```bash
-   pip install -e .
-   ```
-
-2. **Test Failures**: If tests fail unexpectedly, try running them individually to isolate the issue:
-   ```bash
-   python -m unittest tests.specific_test_file.TestClass.test_method -v
-   ```
-
-3. **Linting Errors**: If ruff reports errors, use auto-fix for safe corrections:
-   ```bash
-   ruff check pyhydrate/ tests/ --fix
-   ```
-
-4. **Virtual Environment Issues**: If dependencies are not found, ensure your virtual environment is activated:
-   ```bash
-   source .venv/bin/activate  # Unix/macOS
-   # or .venv\Scripts\activate  # Windows
-   ```
-
-5. **Debug Mode**: For troubleshooting data access issues, use debug mode:
-   ```python
-   from pyhydrate import PyHydrate
-   data = PyHydrate(your_data, debug=True)
-   result = data.some.nested.access()  # Will show detailed access logging
-   ```
-
-## Contributing Guidelines
-
-### General Guidelines
-
-- Follow the existing code style and conventions
-- Write comprehensive tests for new features
-- Update documentation when adding new functionality
-- Ensure all tests pass before submitting a pull request
-- Use meaningful commit messages
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch from `main`
-3. Make your changes following the development best practices
-4. Run tests and linting
-5. Commit your changes with clear messages
-6. Push to your fork and submit a pull request
-
-### Commit Strategy
-
-- Use clear, descriptive commit messages
-- Make atomic commits (one logical change per commit)
-- Reference issue numbers when applicable
-- Follow conventional commit format when possible
-
-### Your First Pull Request
-
-1. Look for issues labeled "good first issue"
-2. Comment on the issue to indicate you're working on it
-3. Follow the development workflow above
-4. Ask questions if you need help - we're here to support you!
+### Recently Completed Features
+- ✅ **TOML Callable Argument Support**: Added 'toml' as a callable argument option with comprehensive serialization support, error handling, and 6 new tests covering all TOML functionality scenarios
+- ✅ **Standardized Error Handling (Issue #28)**: Implemented comprehensive error handling strategy with custom warning classes, structured logging, and consistent error patterns across the entire codebase
+- ✅ **Error Handling for Invalid Call Types (Issue #25)**: Implemented proper warning system for invalid call types with comprehensive tests and updated documentation
+- ✅ **Memory Efficiency (Issue #30)**: Implemented lazy loading architecture with ~67% memory reduction, `__slots__` optimization, and smart caching
+- ✅ **Architecture Refactoring (Issue #29)**: Simplified inheritance hierarchy from 4 levels to 2, eliminated circular dependencies, merged NotationRepresentation into NotationBase
+- ✅ **Magic Methods (Issue #24)**: Full implementation of `__int__`, `__float__`, and `__bool__` magic methods with comprehensive error handling and 35 test cases
+- ✅ **Code Quality**: All linting issues resolved, code formatting standardized
+- ✅ **CI Enhancement**: Added automated linting and formatting checks to GitHub Actions workflows
+- ✅ **Documentation**: Added comprehensive Mermaid diagrams showing class hierarchy, data flow, and dependency management
 
 ### Continuous Integration
-
 The project uses GitHub Actions for automated testing:
 
 **Workflows:**
@@ -521,33 +404,29 @@ The project uses GitHub Actions for automated testing:
 - `ruff format --check pyhydrate/ tests/` - Code formatting validation
 - Both checks run before tests to ensure code quality
 
-### Ruff Configuration
+**Test Discovery Automation:**
+- CI uses `python -m unittest discover -s tests/ -p "*_tests.py"` for automatic test file detection
+- New test files following the `*_tests.py` pattern are automatically included
+- No need to manually update CI configuration when adding new test files
+- Runs all 102 tests across 9 test files on every push
 
+### Ruff Configuration
 The project uses a comprehensive `ruff.toml` configuration with:
 - **Target**: Python 3.8+ compatibility
 - **Line length**: 88 characters (Black-compatible)
 - **Enabled rules**: Extensive rule set covering style, imports, security, performance
-- **Ignored rules**: Selective ignores for project-specific needs
+- **Ignored rules**: Selective ignores for project-specific needs including:
+  - Print statements (T201) - allowed for debug output
+  - TODO comments (FIX002) - allowed for development notes
+  - unittest.assertRaises (PT027) - project uses unittest, not pytest
+  - Magic value comparisons (PLR2004) - allowed in tests
 - **Per-file ignores**: Test files have relaxed rules for magic values and assertions
 
 Current status: **All linting issues resolved** ✅
 
-## Reporting Issues
+Previously resolved technical debt issues:
+- ✅ PYI041: Simplified Union[int, float] to just float in type annotations
+- ✅ FBT001/FBT002: Made boolean parameters keyword-only in YAML dumper
+- ✅ ARG002: Explicitly acknowledged unused parameter with proper documentation
 
-When reporting issues, please include:
-
-- Python version
-- PyHydrate version
-- Minimal code example that reproduces the issue
-- Expected vs actual behavior
-- Full error traceback if applicable
-
-## Questions?
-
-If you have questions about contributing, feel free to:
-
-- Open an issue for discussion
-- Start a discussion in the GitHub Discussions tab
-- Look through existing issues and pull requests for examples
-
-Thank you for contributing to PyHydrate!
+The codebase now passes all ruff checks with zero linting errors.
