@@ -87,7 +87,6 @@ class ReprMethodTests(unittest.TestCase):
         """Test __repr__ with different data types."""
 
         test_cases = [
-            # (data, description)
             ({"string": "test", "int": 42, "float": 3.14, "bool": True}, "mixed types"),
             ([1, "two", 3.0, False], "array with mixed types"),
             ({"nested": {"deep": {"value": "found"}}}, "deeply nested"),
