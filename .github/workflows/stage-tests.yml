@@ -2,7 +2,7 @@
 name: stage-tests
 
 on:
-  push:
+  pull_request:
     branches: [stage]
 
 permissions:

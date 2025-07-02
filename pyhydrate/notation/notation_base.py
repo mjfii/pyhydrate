@@ -165,7 +165,7 @@ class NotationBase(object):
 
         # Try to get the raw value from the object
         try:
-            _working_value: Union[str, None] = self.__dict__.get("_raw_value", None)
+            _working_value: Union[str, None] = getattr(self, "_raw_value", None)
         except AttributeError:
             return f"{self._repr_key}(None)"
 
@@ -173,9 +173,9 @@ class NotationBase(object):
         # TODO: is this necessary?
         if not _working_value:
             try:
-                _working_value = self.__dict__.get("_structure").__dict__.get(
-                    "_raw_value", None
-                )
+                _structure = getattr(self, "_structure", None)
+                if _structure:
+                    _working_value = getattr(_structure, "_raw_value", None)
             except AttributeError:
                 return f"{self._repr_key}(None)"
 

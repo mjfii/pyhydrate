@@ -292,11 +292,9 @@ class NotationArray(NotationBase):
             if int_index in self._hydrated_cache:
                 return self._hydrated_cache[int_index]
 
-            # Check bounds
-            if (
-                self._raw_value is None
-                or int_index < 0
-                or int_index >= len(self._raw_value)
+            # Check bounds (allow negative indexing like Python lists)
+            if self._raw_value is None or not (
+                -len(self._raw_value) <= int_index < len(self._raw_value)
             ):
                 raise IndexError("Index out of range")
 

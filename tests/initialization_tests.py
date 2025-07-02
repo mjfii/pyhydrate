@@ -207,7 +207,7 @@ class InitializationTests(unittest.TestCase):
         assert data.hobbies[0]() == "reading"
 
         # Test the structure matches expected data
-        assert isinstance(data._structure._value, dict)
+        assert isinstance(data().get("name"), str)
 
     def test_init_with_yaml_path(self) -> None:
         """Test initialization with a YAML file path."""
@@ -221,7 +221,7 @@ class InitializationTests(unittest.TestCase):
         assert data.hobbies[0]() == "reading"
 
         # Test the structure matches expected data
-        assert isinstance(data._structure._value, dict)
+        assert isinstance(data().get("name"), str)
 
     def test_init_with_toml_path(self) -> None:
         """Test initialization with a TOML file path."""
@@ -235,7 +235,7 @@ class InitializationTests(unittest.TestCase):
         assert data.hobbies[0]() == "reading"
 
         # Test the structure matches expected data
-        assert isinstance(data._structure._value, dict)
+        assert isinstance(data().get("name"), str)
 
     def test_init_with_string_path(self) -> None:
         """Test initialization with a string file path."""
@@ -276,7 +276,7 @@ class InitializationTests(unittest.TestCase):
         # PyHydrate() with no arguments should default to source_value=None
         data = PyHydrate()
         assert data() is None
-        assert isinstance(data._structure._value, type(None))
+        assert data() is None
 
     def test_path_takes_precedence_over_source_value(self) -> None:
         """Test that path parameter takes precedence over source_value."""

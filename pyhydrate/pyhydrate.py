@@ -137,7 +137,8 @@ class PyHydrate(NotationBase):
                 f"Root access: {self.__class__.__name__} -> {type(self._raw_value).__name__}"
             )
 
-    def _load_from_path(self, file_path: Path) -> Any:
+    @staticmethod
+    def _load_from_path(file_path: Path) -> Any:
         """
         Load data from a file path with automatic format detection.
 
