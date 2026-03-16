@@ -97,6 +97,9 @@ def main() -> None:
         },
     }
 
+    print_subsection("Input data (mixed key formats)")
+    print(json.dumps(complex_data, indent=3))
+
     # Initialize with debug mode
     print_subsection("Creating PyHydrate instance with debug mode")
     data = PyHydrate(complex_data, debug=False)  # <-
