@@ -70,6 +70,7 @@ from .notation import (
     NotationArray,
     NotationObject,
     NotationPrimitive,
+    NotationProxy,
 )
 from .notation.notation_base import NotationBase
 
@@ -119,7 +120,23 @@ class PyHydrate(NotationBase):
     """
 
     # Memory optimization with __slots__
-    __slots__ = ("_root_type", "_structure")
+    __slots__ = ("_root_type", "_source_path", "_structure")
+
+    # Internal attributes that should bypass __setattr__ data path
+    _INTERNAL_ATTRS: frozenset = frozenset(
+        {
+            "_raw_value",
+            "_root_type",
+            "_source_path",
+            "_structure",
+            "_kwargs",
+            "_depth",
+            "_debug",
+            "_call",
+            "_parent",
+            "_parent_key",
+        }
+    )
 
     # INTERNAL METHODS
     def _print_root(self) -> None:
@@ -232,7 +249,11 @@ class PyHydrate(NotationBase):
             >>> data = PyHydrate(source, debug=True)
             >>> data = PyHydrate(path="config.json", debug=True)
         """
+        self._kwargs = kwargs
         self._debug = kwargs.get("debug", False)
+        self._parent = None
+        self._parent_key = None
+        self._source_path = Path(path) if path is not None else None
 
         # Handle file path input
         if path is not None:
@@ -328,7 +349,7 @@ class PyHydrate(NotationBase):
 
     def __getattr__(
         self, key: str
-    ) -> Union[NotationArray, NotationObject, NotationPrimitive, None]:
+    ) -> Union[NotationArray, NotationObject, NotationPrimitive, NotationProxy, None]:
         """
         Enable dot notation access to nested data.
 
@@ -336,13 +357,18 @@ class PyHydrate(NotationBase):
         on the PyHydrate instance, delegating to the wrapped structure
         for dot notation access (e.g., data.user.name).
 
+        If the underlying structure is a primitive (e.g., empty PyHydrate()),
+        returns a NotationProxy for potential write-through creation.
+
         Args:
             key (str): The attribute name to access
 
         Returns:
-            Union[NotationArray, NotationObject, NotationPrimitive, None]:
-                The wrapped value at the specified key, or None if not found
+            Union[NotationArray, NotationObject, NotationPrimitive, NotationProxy, None]:
+                The wrapped value at the specified key, or proxy if not found
         """
+        if isinstance(self._structure, NotationPrimitive):
+            return NotationProxy(parent=self, parent_key=key)
         return getattr(self._structure, key)
 
     def __getitem__(
@@ -362,6 +388,139 @@ class PyHydrate(NotationBase):
                 The wrapped value at the specified index, or None if not found
         """
         return self._structure[index]
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        """
+        Set a value via dot notation or initialize internal attributes.
+
+        Internal attributes are set normally. All other keys are treated
+        as data writes. If the underlying structure is not a NotationObject,
+        it is promoted to one (enabling creation from scratch).
+
+        Args:
+            key (str): The attribute/key name
+            value: The value to set
+        """
+        if key in PyHydrate._INTERNAL_ATTRS or key.startswith("__"):
+            object.__setattr__(self, key, value)
+            return
+        # Promote structure to NotationObject if needed
+        if not isinstance(self._structure, NotationObject):
+            new_obj = NotationObject({}, 0, **self._kwargs)
+            object.__setattr__(self, "_structure", new_obj)
+            object.__setattr__(self, "_root_type", dict)
+            object.__setattr__(self, "_raw_value", new_obj._raw_value)
+        setattr(self._structure, key, value)
+
+    def __setitem__(self, index: int, value: Any) -> None:
+        """
+        Set an element by index for list-like data.
+
+        Args:
+            index (int): The index to set
+            value: The value to set
+        """
+        if isinstance(self._structure, NotationArray):
+            self._structure[index] = value
+
+    def __delattr__(self, key: str) -> None:
+        """
+        Delete a key from the underlying data.
+
+        Args:
+            key (str): The key to delete
+
+        Raises:
+            AttributeError: If key is an internal attribute or not found
+        """
+        if key in PyHydrate._INTERNAL_ATTRS or key.startswith("__"):
+            raise AttributeError(f"Cannot delete internal attribute '{key}'")
+        if isinstance(self._structure, NotationObject):
+            delattr(self._structure, key)
+        else:
+            raise TypeError(f"Cannot delete '{key}' on non-object structure")
+
+    def __delitem__(self, index: int) -> None:
+        """
+        Delete an element by index for list-like data.
+
+        Args:
+            index (int): The index to delete
+
+        Raises:
+            TypeError: If the underlying structure is not an array
+        """
+        if isinstance(self._structure, NotationArray):
+            del self._structure[index]
+        else:
+            raise TypeError("Cannot delete items on non-array structure")
+
+    def save(
+        self,
+        path: Union[str, Path, None] = None,
+        *,
+        output_format: Union[str, None] = None,
+    ) -> None:
+        """
+        Save the current data to a file.
+
+        Determines the output format from the file extension (or explicit
+        output_format parameter) and writes the serialized data.
+
+        Args:
+            path: File path to write to. If None, uses the original
+                source path from construction.
+            output_format: Force a specific format ('json', 'yaml', 'toml').
+                If None, detected from file extension.
+
+        Raises:
+            ValueError: If no path is available or format cannot be determined
+        """
+        if path is None:
+            path = self._source_path
+        if path is None:
+            raise ValueError("No file path specified and no source path available")
+
+        file_path = Path(path)
+        fmt = output_format or self._detect_format(file_path)
+
+        content = self._structure(fmt)
+        if content is None:
+            raise ValueError(f"Cannot serialize to '{fmt}'")
+
+        # Ensure trailing newline for file output
+        if not content.endswith("\n"):
+            content += "\n"
+
+        file_path.write_text(content, encoding="utf-8")
+
+    @staticmethod
+    def _detect_format(file_path: Path) -> str:
+        """
+        Detect the serialization format from a file extension.
+
+        Args:
+            file_path: The file path to inspect
+
+        Returns:
+            str: The format string ('json', 'yaml', or 'toml')
+
+        Raises:
+            ValueError: If the extension is not recognized
+        """
+        ext_map = {
+            ".json": "json",
+            ".yaml": "yaml",
+            ".yml": "yaml",
+            ".toml": "toml",
+        }
+        ext = file_path.suffix.lower()
+        if ext not in ext_map:
+            raise ValueError(
+                f"Cannot detect format from extension: '{ext}'. "
+                f"Supported: .json, .yaml, .yml, .toml"
+            )
+        return ext_map[ext]
 
     def __call__(
         self, *args: Any
