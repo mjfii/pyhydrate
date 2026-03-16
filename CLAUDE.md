@@ -153,6 +153,50 @@ python main.py
    result = data.some.nested.access()  # Will show detailed access logging
    ```
 
+### TOML Support
+
+PyHydrate now supports TOML serialization via the 'toml' callable argument:
+
+```python
+from pyhydrate import PyHydrate
+
+# Dictionary to TOML
+data = PyHydrate({'database': {'host': 'localhost', 'port': 5432, 'name': 'mydb'}})
+print(data('toml'))
+# Output:
+# [database]
+# host = "localhost"
+# port = 5432
+# name = "mydb"
+
+# Nested object to TOML
+print(data.database('toml'))
+# Output: 
+# host = "localhost"
+# port = 5432
+# name = "mydb"
+
+# Primitive to TOML (wrapped in element format)
+print(data.database.host('toml'))
+# Output:
+# str = "localhost"
+
+# Lists are wrapped in a root table for TOML compatibility
+list_data = PyHydrate([{'name': 'item1'}, {'name': 'item2'}])
+print(list_data('toml'))
+# Output:
+# [[data]]
+# name = "item1"
+# 
+# [[data]]
+# name = "item2"
+```
+
+**TOML Limitations:**
+- None values are omitted (TOML specification requirement)
+- Lists require wrapping in a root table
+- Only dict-like structures can be serialized to TOML
+
 ## Project Architecture
 
 PyHydrate is a Python library that enables dot notation access to nested data structures (dicts, lists, JSON, YAML, TOML) with graceful error handling and automatic key normalization.
@@ -227,7 +271,7 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 - Call with no args or 'value': returns cleaned value
 - Call with 'element': returns `{type: value}` dict
 - Call with 'type': returns Python type
-- Call with 'json'/'yaml': returns formatted string
+- Call with 'json'/'yaml'/'toml': returns formatted string
 - Call with 'depth': returns recursion depth
 - Call with 'map': returns key mapping (when implemented)
 
@@ -260,9 +304,9 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 ### Test Structure
 - `tests/dict_get_tests.py` - Dictionary access patterns
 - `tests/list_get_tests.py` - Array/list access patterns  
-- `tests/call_tests.py` - Method call functionality (yaml, json, type, etc.)
+- `tests/call_tests.py` - Method call functionality (yaml, json, toml, type, etc.)
 - `tests/primitive_get_tests.py` - Primitive value handling
-- `tests/none_serialization_tests.py` - None value serialization in YAML/JSON formats
+- `tests/none_serialization_tests.py` - None value serialization in YAML/JSON/TOML formats
 - `tests/magic_methods_tests.py` - Magic methods (`__int__`, `__float__`, `__bool__`) functionality
 - `tests/memory_efficiency_tests.py` - Lazy loading and memory optimization validation
 - `tests/error_handling_tests.py` - Standardized error handling and warning system validation
@@ -284,7 +328,7 @@ This codebase follows modern Python development practices:
 - Modern Python patterns: uses `pathlib.Path.read_text()`, keyword-only parameters, and proper type comparisons
 
 **Testing Standards:**
-- Comprehensive test coverage with 102 tests across 9 test files
+- Comprehensive test coverage with 112 tests across 9 test files
 - Uses unittest framework with modern `assert` statements
 - All tests pass after linting and formatting improvements
 - Test data is organized in dedicated `pyhydrate/data/` directory
@@ -323,7 +367,7 @@ This codebase follows modern Python development practices:
 - Include error handling tests for new warning types or error conditions
 
 **Key Implementation Notes:**
-- None handling is properly implemented in YAML/JSON serialization
+- None handling is properly implemented in YAML/JSON/TOML serialization
 - Magic methods (`__int__`, `__float__`, `__bool__`) enable natural type conversion with proper error handling
 - Debug mode provides detailed traversal logging for troubleshooting
 - The `_cast_key` method handles automatic key normalization (camelCase → snake_case)
@@ -338,6 +382,7 @@ This codebase follows modern Python development practices:
 - TODO comments indicate areas for future enhancement
 
 ### Recently Completed Features
+- ✅ **TOML Callable Argument Support**: Added 'toml' as a callable argument option with comprehensive serialization support, error handling, and 6 new tests covering all TOML functionality scenarios
 - ✅ **Standardized Error Handling (Issue #28)**: Implemented comprehensive error handling strategy with custom warning classes, structured logging, and consistent error patterns across the entire codebase
 - ✅ **Error Handling for Invalid Call Types (Issue #25)**: Implemented proper warning system for invalid call types with comprehensive tests and updated documentation
 - ✅ **Memory Efficiency (Issue #30)**: Implemented lazy loading architecture with ~67% memory reduction, `__slots__` optimization, and smart caching

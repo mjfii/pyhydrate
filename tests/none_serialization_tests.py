@@ -20,6 +20,26 @@ class NoneSerializationTests(unittest.TestCase):
         expected = json.dumps({"NoneType": None}, indent=3)
         assert result == expected
 
+    def test_none_value_toml(self) -> None:
+        """Test TOML serialization of direct None value."""
+        test_none = pyhy.PyHydrate(None)
+        result = test_none("toml")
+        # TOML doesn't support None values, so serializing {'NoneType': None}
+        # results in an empty string (the None key is omitted)
+        assert result == ""
+
+    def test_dict_with_none_values_toml(self) -> None:
+        """Test TOML serialization of dict containing None values."""
+        test_data = {"key": None, "other": "value"}
+        test_dict = pyhy.PyHydrate(test_data)
+        result = test_dict("toml")
+
+        # TOML doesn't support None values, so the key with None should be omitted
+        # Only the non-None values should appear
+        assert 'other = "value"' in result
+        # The None key should not appear in TOML output
+        assert "key" not in result
+
     def test_dict_with_none_values_yaml(self) -> None:
         """Test YAML serialization of dict containing None values."""
         test_data = {"key": None, "other": "value", "nested": {"inner": None}}
