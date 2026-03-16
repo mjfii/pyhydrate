@@ -33,8 +33,6 @@ setup.py linguist-language=Python
 # TOML linguistics
 pyproject.toml linguist-detectable=true
 pyproject.toml linguist-language=TOML
-ruff.toml linguist-detectable=true
-ruff.toml linguist-language=TOML
 
 # Binary detection
 *.png binary
