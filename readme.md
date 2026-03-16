@@ -6,9 +6,9 @@
 [![downloads](https://static.pepy.tech/badge/pyhydrate/month)](https://pepy.tech/project/pyhydrate)
 [![versions](https://img.shields.io/pypi/pyversions/pyhydrate.svg)](https://github.com/mjfii/pyhydrate)
 
-Easily access your JSON, YAML, TOML, dicts, and lists with dot notation.
+Easily access and mutate your JSON, YAML, TOML, dicts, and lists with dot notation.
 
-`PyHydrate` provides a simple way to access nested data structures without worrying about `.get()` methods, defaults, or array slicing. It handles errors gracefully when accessing data elements that may not exist, with automatic key normalization and type inference.
+`PyHydrate` provides a simple way to read and write nested data structures without worrying about `.get()` methods, defaults, or array slicing. It handles errors gracefully when accessing data elements that may not exist, with automatic key normalization and type inference. You can also create structures from scratch, mutate existing ones, and save them back to files.
 
 ## Repository Structure
 
@@ -50,6 +50,7 @@ pyhydrate/
 │       ├── __init__.py
 │       ├── notation_base.py
 │       ├── notation_primitive.py
+│       ├── notation_proxy.py
 │       ├── notation_structures.py
 │       └── notation_dumper.py
 ├── tests/
@@ -64,13 +65,14 @@ pyhydrate/
 │   ├── memory_efficiency_tests.py
 │   ├── none_serialization_tests.py
 │   ├── primitive_get_tests.py
-│   └── repr_method_tests.py
+│   ├── repr_method_tests.py
+│   ├── save_tests.py
+│   └── write_tests.py
 ├── claude.md
 ├── demo.py
 ├── license
 ├── pyproject.toml
-├── readme.md
-└── ruff.toml
+└── readme.md
 ```
 
 ## Prerequisites
@@ -215,6 +217,45 @@ print(py_data.users[0].name())  # "John"
 print(py_data.users[1].age())   # 25
 ```
 
+### Write Support (Mutation)
+
+Set values via dot notation, create structures from scratch, and save to files:
+
+```python
+# Modify existing data
+data = PyHydrate({"name": "Alice", "age": 25})
+data.name = "Bob"
+data.email = "bob@example.com"
+print(data())  # {"name": "Bob", "age": 25, "email": "bob@example.com"}
+
+# Create from scratch with deep auto-creation
+config = PyHydrate()
+config.database.host = "localhost"
+config.database.port = 5432
+print(config('json'))
+# {"database": {"host": "localhost", "port": 5432}}
+
+# Delete keys
+del data.age
+print(data())  # {"name": "Bob", "email": "bob@example.com"}
+
+# Mutate arrays
+items = PyHydrate([1, 2, 3])
+items[1] = 99
+del items[0]
+print(items())  # [99, 3]
+
+# Save to file (format detected from extension)
+data.save("output.json")
+data.save("output.yaml")
+data.save("output.toml")
+
+# Round-trip: load, modify, save back
+config = PyHydrate(path="config.json")
+config.database.port = 3306
+config.save()  # Saves back to the original file
+```
+
 ### Debug Mode
 Get detailed access logging:
 
@@ -288,11 +329,13 @@ python demo.py
 
 This interactive demo showcases:
 - Complex data structures with mixed key formats
-- All output formats (JSON, YAML, TOML, element, type)
+- All output formats (JSON, YAML, TOML, element, type, map, depth)
 - Array access and negative indexing
 - String format detection and file loading
 - Graceful error handling and warning system
 - Magic methods and type conversion
+- Write/mutation via dot notation (set, delete, deep auto-creation)
+- File save/persistence with round-trip support
 - Lazy loading performance with actual proof
 - Complete feature overview
 

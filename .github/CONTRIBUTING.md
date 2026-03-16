@@ -377,7 +377,7 @@ graph TB
 This codebase follows modern Python development practices:
 
 **Linting and Formatting:**
-- Uses `ruff` for both linting and formatting (configured in `ruff.toml`)
+- Uses `ruff` for both linting and formatting (configured in `pyproject.toml` under `[tool.ruff]`)
 - Code is automatically formatted for consistency
 - **All linting issues resolved**: Reduced from 45+ errors to 0 remaining issues
 - All functions have proper type annotations including `*args`, `**kwargs`, and return types
@@ -522,7 +522,7 @@ The project uses GitHub Actions for automated testing:
 
 ### Ruff Configuration
 
-The project uses a comprehensive `ruff.toml` configuration with:
+The project uses a comprehensive ruff configuration in `pyproject.toml` (under `[tool.ruff]`) with:
 - **Target**: Python 3.8+ compatibility
 - **Line length**: 88 characters (Black-compatible)
 - **Enabled rules**: Extensive rule set covering style, imports, security, performance
