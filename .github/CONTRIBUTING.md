@@ -25,8 +25,7 @@ Thank you for your interest in contributing to PyHydrate! This document provides
 
 3. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
-   pip install -e .  # Install in development mode
+   pip install -e ".[dev]"
    ```
 
 ## Development Commands

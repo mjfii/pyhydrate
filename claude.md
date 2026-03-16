@@ -13,7 +13,7 @@ python -m unittest discover -s tests/ -p "*_tests.py"
 Run individual test files (if needed):
 ```bash
 python -m unittest tests/dict_get_tests.py
-python -m unittest tests/list_get_tests.py  
+python -m unittest tests/list_get_tests.py
 python -m unittest tests/call_tests.py
 python -m unittest tests/primitive_get_tests.py
 python -m unittest tests/none_serialization_tests.py
@@ -21,6 +21,8 @@ python -m unittest tests/magic_methods_tests.py
 python -m unittest tests/memory_efficiency_tests.py
 python -m unittest tests/initialization_tests.py
 python -m unittest tests/error_handling_tests.py
+python -m unittest tests/array_edge_cases_tests.py
+python -m unittest tests/repr_method_tests.py
 ```
 
 Run tests with verbose output:
@@ -67,58 +69,24 @@ Set up isolated development environment:
 python -m venv .venv
 source .venv/bin/activate  # Unix/macOS
 # or .venv\Scripts\activate  # Windows
-pip install -r requirements.txt
-pip install -e .  # Install in development mode
+pip install -e ".[dev]"
 ```
 
 ### Building and Installation
-Install dependencies:
+Install in development mode (includes dev dependencies):
 ```bash
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 Build the package:
 ```bash
-pip install build
 python -m build
-```
-
-Install in development mode:
-```bash
-pip install -e .
-```
-
-### Documentation
-Build documentation locally:
-```bash
-# Install documentation dependencies
-pip install -r docs/requirements.txt
-
-# Build HTML documentation
-cd docs
-sphinx-build -b html . _build/html
-
-# Build with verbose output for debugging
-sphinx-build -b html . _build/html -v
-
-# Clean build (remove cached files)
-rm -rf _build/ && sphinx-build -b html . _build/html
-```
-
-View built documentation:
-```bash
-# Open in browser (macOS)
-open docs/_build/html/index.html
-
-# Or serve locally
-cd docs/_build/html && python -m http.server 8000
-# Then visit http://localhost:8000
 ```
 
 ### Running Examples
 Execute the main demo:
 ```bash
-python main.py
+python demo.py
 ```
 
 ### Troubleshooting
@@ -303,7 +271,7 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 
 ### Test Structure
 - `tests/dict_get_tests.py` - Dictionary access patterns
-- `tests/list_get_tests.py` - Array/list access patterns  
+- `tests/list_get_tests.py` - Array/list access patterns
 - `tests/call_tests.py` - Method call functionality (yaml, json, toml, type, etc.)
 - `tests/primitive_get_tests.py` - Primitive value handling
 - `tests/none_serialization_tests.py` - None value serialization in YAML/JSON/TOML formats
@@ -311,6 +279,8 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 - `tests/memory_efficiency_tests.py` - Lazy loading and memory optimization validation
 - `tests/error_handling_tests.py` - Standardized error handling and warning system validation
 - `tests/initialization_tests.py` - Comprehensive initialization tests for all supported input types (primitives, dicts, lists, JSON, YAML, TOML)
+- `tests/array_edge_cases_tests.py` - Array edge cases, bounds checking, and error handling
+- `tests/repr_method_tests.py` - `__repr__` method functionality and warning prevention
 - Test data located in `pyhydrate/data/` as JSON, YAML, and TOML files
 
 **Test Discovery:** All test files follow the `*_tests.py` naming pattern and are automatically discovered by the CI system.
@@ -328,7 +298,7 @@ This codebase follows modern Python development practices:
 - Modern Python patterns: uses `pathlib.Path.read_text()`, keyword-only parameters, and proper type comparisons
 
 **Testing Standards:**
-- Comprehensive test coverage with 112 tests across 9 test files
+- Comprehensive test coverage with 147 tests across 11 test files
 - Uses unittest framework with modern `assert` statements
 - All tests pass after linting and formatting improvements
 - Test data is organized in dedicated `pyhydrate/data/` directory
@@ -396,8 +366,9 @@ This codebase follows modern Python development practices:
 The project uses GitHub Actions for automated testing:
 
 **Workflows:**
-- `.github/workflows/stage-tests.yml` - Tests and linting on `stage` branch pushes
 - `.github/workflows/prod-tests.yml` - Tests and linting on `main` branch pushes (production CI)
+- `.github/workflows/stage-tests.yml` - Tests and linting on `stage` branch pull requests
+- `.github/workflows/version-deployment.yml` - CD pipeline triggered on GitHub release publication; updates version in `pyproject.toml`, builds, and publishes to PyPI
 
 **Quality Checks in CI:**
 - `ruff check pyhydrate/ tests/` - Code quality linting
@@ -408,7 +379,7 @@ The project uses GitHub Actions for automated testing:
 - CI uses `python -m unittest discover -s tests/ -p "*_tests.py"` for automatic test file detection
 - New test files following the `*_tests.py` pattern are automatically included
 - No need to manually update CI configuration when adding new test files
-- Runs all 102 tests across 9 test files on every push
+- Runs all 147 tests across 11 test files on every push
 
 ### Ruff Configuration
 The project uses a comprehensive `ruff.toml` configuration with:

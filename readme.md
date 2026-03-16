@@ -10,6 +10,79 @@ Easily access your JSON, YAML, TOML, dicts, and lists with dot notation.
 
 `PyHydrate` provides a simple way to access nested data structures without worrying about `.get()` methods, defaults, or array slicing. It handles errors gracefully when accessing data elements that may not exist, with automatic key normalization and type inference.
 
+## Repository Structure
+
+```
+pyhydrate/
+├── .github/
+│   ├── CODEOWNERS
+│   ├── CODE_OF_CONDUCT.md
+│   ├── CONTRIBUTING.md
+│   ├── CONTRIBUTORS.md
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   ├── documentation_need.md
+│   │   └── feature_request.md
+│   └── workflows/
+│       ├── prod-tests.yml
+│       ├── stage-tests.yml
+│       └── version-deployment.yml
+├── pyhydrate/
+│   ├── __init__.py
+│   ├── pyhydrate.py
+│   ├── error_handling.py
+│   ├── types.py
+│   ├── data/
+│   │   ├── basic-dict-get.json
+│   │   ├── basic-list-get.json
+│   │   ├── init-test-data.json
+│   │   ├── init-test-data.toml
+│   │   └── init-test-data.yaml
+│   ├── exceptions/
+│   │   ├── __init__.py
+│   │   ├── pyhydrate_warning.py
+│   │   ├── type_conversion_warning.py
+│   │   ├── access_pattern_warning.py
+│   │   ├── api_usage_warning.py
+│   │   └── format_warning_message.py
+│   └── notation/
+│       ├── __init__.py
+│       ├── notation_base.py
+│       ├── notation_primitive.py
+│       ├── notation_structures.py
+│       └── notation_dumper.py
+├── tests/
+│   ├── __init__.py
+│   ├── array_edge_cases_tests.py
+│   ├── call_tests.py
+│   ├── dict_get_tests.py
+│   ├── error_handling_tests.py
+│   ├── initialization_tests.py
+│   ├── list_get_tests.py
+│   ├── magic_methods_tests.py
+│   ├── memory_efficiency_tests.py
+│   ├── none_serialization_tests.py
+│   ├── primitive_get_tests.py
+│   └── repr_method_tests.py
+├── claude.md
+├── demo.py
+├── license
+├── pyproject.toml
+├── readme.md
+└── ruff.toml
+```
+
+## Prerequisites
+
+- **Python 3.8+**
+- **pip** (Python package manager)
+
+Optional (for development):
+
+- **ruff** for linting and formatting: `pip install ruff`
+- **gh CLI** for GitHub operations: `brew install gh` (macOS) or see [cli.github.com](https://cli.github.com)
+
 ## Installation
 
 ```bash
@@ -17,8 +90,19 @@ pip install pyhydrate
 ```
 
 **Dependencies**: PyHydrate automatically handles TOML support:
-- **Python 3.11+**: Uses built-in `tomllib` 
+- **Python 3.11+**: Uses built-in `tomllib`
 - **Python < 3.11**: Automatically installs `tomli` for TOML support
+
+### Development Setup
+
+```bash
+git clone https://github.com/mjfii/pyhydrate.git
+cd pyhydrate
+python -m venv .venv
+source .venv/bin/activate  # Unix/macOS
+# or .venv\Scripts\activate  # Windows
+pip install -e ".[dev]"
+```
 
 ## Quick Start
 
@@ -56,7 +140,7 @@ Load data from JSON, YAML, or TOML strings - format is detected automatically:
 json_config = '{"database": {"host": "localhost", "port": 5432}}'
 config = PyHydrate(json_config)
 
-# TOML string  
+# TOML string
 toml_config = '''
 [database]
 host = "localhost"
@@ -81,7 +165,7 @@ Load data directly from files:
 ```python
 # Supports .json, .yaml, .yml, and .toml files
 config = PyHydrate(path="config.json")
-settings = PyHydrate(path="settings.yaml") 
+settings = PyHydrate(path="settings.yaml")
 project = PyHydrate(path="pyproject.toml")
 ```
 
@@ -91,13 +175,13 @@ Automatically converts different key formats to snake_case:
 ```python
 data = {
     "firstName": "John",
-    "last-name": "Doe", 
+    "last-name": "Doe",
     "Email Address": "john@example.com"
 }
 
 py_data = PyHydrate(data)
 print(py_data.first_name())      # "John"
-print(py_data.last_name())       # "Doe"  
+print(py_data.last_name())       # "Doe"
 print(py_data.email_address())   # "john@example.com"
 ```
 
@@ -109,7 +193,7 @@ py_data = PyHydrate({"user": {"name": "John", "age": 30}})
 # Different output formats
 print(py_data.user())           # Returns the cleaned Python object
 print(py_data.user('json'))     # Returns JSON string
-print(py_data.user('yaml'))     # Returns YAML string  
+print(py_data.user('yaml'))     # Returns YAML string
 print(py_data.user('toml'))     # Returns TOML string
 print(py_data.user('type'))     # Returns Python type
 print(py_data.user('element'))  # Returns {"dict": {...}}
@@ -203,7 +287,7 @@ python demo.py
 ```
 
 This interactive demo showcases:
-- Complex data structures with mixed key formats  
+- Complex data structures with mixed key formats
 - All output formats (JSON, YAML, TOML, element, type)
 - Array access and negative indexing
 - String format detection and file loading
