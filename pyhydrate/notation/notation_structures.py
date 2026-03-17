@@ -34,6 +34,21 @@ class NotationObject(NotationBase):
     # Memory optimization with __slots__
     __slots__ = ("_hydrated_cache", "_key_mappings")
 
+    # Internal attributes that should bypass __setattr__ data path
+    _INTERNAL_ATTRS: frozenset = frozenset(
+        {
+            "_raw_value",
+            "_hydrated_cache",
+            "_key_mappings",
+            "_kwargs",
+            "_depth",
+            "_debug",
+            "_call",
+            "_parent",
+            "_parent_key",
+        }
+    )
+
     def __init__(self, value: dict, depth: int, **kwargs: Any) -> None:
         """
         Initialize with the raw dict and recursion depth.
@@ -48,6 +63,8 @@ class NotationObject(NotationBase):
         self._kwargs = kwargs
         self._depth = depth + 1
         self._debug = self._kwargs.get("debug", False)
+        self._parent = None
+        self._parent_key = None
 
         if isinstance(value, dict):
             self._raw_value = value
@@ -78,11 +95,14 @@ class NotationObject(NotationBase):
         """
         Get a child element by attribute name using lazy loading.
 
+        For missing keys, returns a NotationProxy that supports deep
+        auto-creation of intermediate dicts on assignment.
+
         Parameters:
             key (str): The attribute name to access
 
         Returns:
-            Union[NotationObject, NotationArray, NotationPrimitive]
+            Union[NotationObject, NotationArray, NotationPrimitive, NotationProxy]
         """
         self._print_debug("Get", key)
 
@@ -95,15 +115,15 @@ class NotationObject(NotationBase):
         if raw_key and raw_key in self._raw_value:
             # Lazy create the child object
             raw_value = self._raw_value[raw_key]
-            self._hydrated_cache[key] = self._create_child(raw_value)
+            self._hydrated_cache[key] = self._create_child(
+                raw_value, parent=self, parent_key=raw_key
+            )
             return self._hydrated_cache[key]
 
-        # Key not found, return None primitive
-        from .notation_primitive import NotationPrimitive
+        # Key not found, return a proxy for potential write-through
+        from .notation_proxy import NotationProxy
 
-        none_primitive = NotationPrimitive(None, self._depth, **self._kwargs)
-        self._hydrated_cache[key] = none_primitive  # Cache the None result
-        return none_primitive
+        return NotationProxy(parent=self, parent_key=key)
 
     def _get_cleaned_value(self) -> Union[dict, None]:
         """
@@ -151,6 +171,63 @@ class NotationObject(NotationBase):
         if isinstance(value, list):
             return [self._get_cleaned_child_value(item) for item in value]
         return value
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        """
+        Set a value via dot notation or initialize internal attributes.
+
+        Internal attributes (those in _INTERNAL_ATTRS or starting with '__')
+        are set normally. All other keys are treated as data writes to the
+        underlying dict.
+
+        Parameters:
+            key (str): The attribute/key name
+            value: The value to set
+        """
+        if key in NotationObject._INTERNAL_ATTRS or key.startswith("__"):
+            object.__setattr__(self, key, value)
+            return
+        self._set_value(key, value)
+
+    def _set_value(self, key: str, value: Any) -> None:
+        """
+        Set a data value in the underlying dict.
+
+        If the key maps to an existing original key (via key normalization),
+        the original key is updated. Otherwise, the key is stored as provided.
+
+        Parameters:
+            key (str): The cleaned/user-facing key name
+            value: The value to set (will be unwrapped if a Notation object)
+        """
+        raw_value = self._unwrap(value)
+        # Preserve original key format if it exists
+        original_key = self._key_mappings.get(key, key)
+        self._raw_value[original_key] = raw_value
+        # Update key mappings
+        cleaned = self._cast_key(original_key)
+        self._key_mappings[cleaned] = original_key
+        # Invalidate cache for this key
+        for k in (key, cleaned):
+            self._hydrated_cache.pop(k, None)
+
+    def __delattr__(self, key: str) -> None:
+        """
+        Delete a key from the underlying dict.
+
+        Parameters:
+            key (str): The attribute/key name to delete
+
+        Raises:
+            AttributeError: If the key is not found
+        """
+        original_key = self._key_mappings.get(key)
+        if original_key and original_key in self._raw_value:
+            del self._raw_value[original_key]
+            del self._key_mappings[key]
+            self._hydrated_cache.pop(key, None)
+        else:
+            raise AttributeError(f"'{key}' not found")
 
     def __getitem__(self, index: int) -> "NotationPrimitive":
         """
@@ -225,6 +302,8 @@ class NotationArray(NotationBase):
         self._kwargs = kwargs
         self._depth = depth + 1
         self._debug = self._kwargs.get("debug", False)
+        self._parent = None
+        self._parent_key = None
 
         if isinstance(value, list):
             self._raw_value = value
@@ -308,6 +387,34 @@ class NotationArray(NotationBase):
 
             # Don't cache error results as they might be valid later
             return NotationPrimitive(None, self._depth, **self._kwargs)
+
+    def __setitem__(self, index: int, value: Any) -> None:
+        """
+        Set an element by index in the underlying list.
+
+        Parameters:
+            index (int): The index to set
+            value: The value to set (will be unwrapped if a Notation object)
+        """
+        raw_value = self._unwrap(value)
+        int_index = int(index)
+        self._raw_value[int_index] = raw_value
+        self._hydrated_cache.pop(int_index, None)
+
+    def __delitem__(self, index: int) -> None:
+        """
+        Delete an element by index from the underlying list.
+
+        Parameters:
+            index (int): The index to delete
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        int_index = int(index)
+        del self._raw_value[int_index]
+        # Clear entire cache since indices shift after deletion
+        self._hydrated_cache.clear()
 
     def __int__(self) -> int:
         """

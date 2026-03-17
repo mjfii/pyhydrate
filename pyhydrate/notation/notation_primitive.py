@@ -63,6 +63,8 @@ class NotationPrimitive(NotationBase):
         # set the inherited class variables
         self._depth = depth + 1
         self._debug = self._kwargs.get("debug", False)
+        self._parent = None
+        self._parent_key = None
 
         if type(value) in self._primitives:
             self._raw_value = value

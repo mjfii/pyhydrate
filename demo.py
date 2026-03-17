@@ -4,7 +4,7 @@ PyHydrate Comprehensive Demo Script
 This script demonstrates all PyHydrate capabilities including:
 - Dictionary and list access with dot notation
 - Key normalization (camelCase, kebab-case, spaces to snake_case)
-- Multiple output formats (JSON, YAML, TOML, element, type)
+- Multiple output formats (JSON, YAML, TOML, element, type, map, depth, value)
 - File loading support (.json, .yaml, .toml)
 - String format detection (JSON, YAML, TOML)
 - Array indexing and nested access
@@ -13,6 +13,8 @@ This script demonstrates all PyHydrate capabilities including:
 - Magic methods (__int__, __float__, __bool__)
 - Warning system and filtering
 - Type conversion and validation
+- Write/mutation via dot notation (set, delete, deep auto-creation)
+- File save/persistence with round-trip support
 """
 
 import json
@@ -95,6 +97,9 @@ def main() -> None:
         },
     }
 
+    print_subsection("Input data (mixed key formats)")
+    print(json.dumps(complex_data, indent=3))
+
     # Initialize with debug mode
     print_subsection("Creating PyHydrate instance with debug mode")
     data = PyHydrate(complex_data, debug=False)  # <-
@@ -137,9 +142,15 @@ def main() -> None:
     print("\nElement format (with type wrapper):")
     print(preferences("element"))
 
+    print("\nExplicit value format (same as default):")
+    print(preferences("value"))
+
     print("\nType information:")
     print(f"Type: {preferences('type')}")
     print(f"Depth: {preferences('depth')}")
+
+    print("\nKey map (original → normalized):")
+    print(preferences("map"))
 
     # =========================================================================
     # 3. ARRAY ACCESS AND MANIPULATION
@@ -327,9 +338,93 @@ def main() -> None:
     warnings.resetwarnings()
 
     # =========================================================================
-    # 9. DEBUG MODE DEMONSTRATION
+    # 9. WRITE / MUTATION SUPPORT
     # =========================================================================
-    print_section("9. Debug Mode Demonstration")
+    print_section("9. Write / Mutation Support")
+
+    print_subsection("Setting existing keys via dot notation")
+    mutable_data = PyHydrate({"user": {"name": "Alice", "age": 25}})
+    print(f"Before: name={mutable_data.user.name()}, age={mutable_data.user.age()}")
+    mutable_data.user.name = "Bob"
+    mutable_data.user.age = 30
+    print(f"After:  name={mutable_data.user.name()}, age={mutable_data.user.age()}")
+
+    print_subsection("Adding new keys to existing objects")
+    mutable_data.user.email = "bob@example.com"
+    print(f"New key added - email: {mutable_data.user.email()}")
+
+    print_subsection("Assigning dict and list values")
+    mutable_data.user.address = {"city": "Portland", "state": "OR"}
+    mutable_data.user.hobbies = ["coding", "hiking"]
+    print(f"Dict value - city: {mutable_data.user.address.city()}")
+    print(f"List value - hobbies: {mutable_data.user.hobbies()}")
+
+    print_subsection("Deep auto-creation of intermediate dicts")
+    scratch = PyHydrate()
+    scratch.config.database.host = "localhost"
+    scratch.config.database.port = 5432
+    scratch.config.cache.enabled = True
+    print(f"Created from scratch: {scratch()}")
+
+    print_subsection("Array mutation")
+    arr = PyHydrate([10, 20, 30])
+    print(f"Before: {arr()}")
+    arr[1] = 99
+    print(f"After arr[1] = 99: {arr()}")
+
+    print_subsection("Deleting attributes and items")
+    del_demo = PyHydrate({"name": "Alice", "age": 25, "temp": "remove_me"})
+    print(f"Before delete: {del_demo()}")
+    del del_demo.temp
+    print(f"After del del_demo.temp: {del_demo()}")
+
+    arr_del = PyHydrate([1, 2, 3, 4])
+    print(f"Array before delete: {arr_del()}")
+    del arr_del[0]
+    print(f"After del arr_del[0]: {arr_del()}")
+
+    print_subsection("Serialization reflects mutations")
+    mutated = PyHydrate({"name": "old", "version": 1})
+    mutated.name = "new"
+    mutated.version = 2
+    print(f"JSON after mutation:\n{mutated('json')}")
+
+    # =========================================================================
+    # 10. FILE SAVE / PERSISTENCE
+    # =========================================================================
+    print_section("10. File Save / Persistence")
+
+    print_subsection("Save to JSON file, then reload")
+    save_data = PyHydrate({"project": "PyHydrate", "version": "1.0.0"})
+    save_path = Path("demo_output.json")
+    save_data.save(save_path)
+    reloaded = PyHydrate(path=str(save_path))
+    print(f"Saved and reloaded - project: {reloaded.project()}")
+    save_path.unlink(missing_ok=True)
+
+    print_subsection("Round-trip: load → modify → save → reload")
+    rt_path = Path("demo_roundtrip.json")
+    rt_path.write_text(json.dumps({"name": "Alice", "score": 90}), encoding="utf-8")
+    rt_data = PyHydrate(path=str(rt_path))
+    rt_data.score = 100
+    rt_data.save()  # saves back to source path
+    rt_reloaded = PyHydrate(path=str(rt_path))
+    print(
+        f"Original score: 90 → Modified and saved → Reloaded score: {rt_reloaded.score()}"
+    )
+    rt_path.unlink(missing_ok=True)
+
+    print_subsection("Save with format override")
+    fmt_data = PyHydrate({"key": "value"})
+    fmt_path = Path("demo_override.txt")
+    fmt_data.save(fmt_path, output_format="json")
+    print(f"Saved as JSON to .txt file: {fmt_path.read_text(encoding='utf-8').strip()}")
+    fmt_path.unlink(missing_ok=True)
+
+    # =========================================================================
+    # 11. DEBUG MODE DEMONSTRATION
+    # =========================================================================
+    print_section("11. Debug Mode Demonstration")
 
     print_subsection("Debug logging in action")
     debug_data = PyHydrate(complex_data, debug=True)
@@ -339,9 +434,9 @@ def main() -> None:
     print(f"Final result: {result}")
 
     # =========================================================================
-    # 10. PERFORMANCE AND MEMORY EFFICIENCY
+    # 12. PERFORMANCE AND MEMORY EFFICIENCY
     # =========================================================================
-    print_section("10. Performance and Memory Efficiency")
+    print_section("12. Performance and Memory Efficiency")
 
     print_subsection("Lazy loading proof via object identity")
 
@@ -403,14 +498,14 @@ def main() -> None:
     print("   ✅ This provides ~67% memory reduction vs eager loading")
 
     # =========================================================================
-    # 11. COMPREHENSIVE FEATURE SUMMARY
+    # 13. COMPREHENSIVE FEATURE SUMMARY
     # =========================================================================
-    print_section("11. Feature Summary")
+    print_section("13. Feature Summary")
 
     features = [
         "✅ Dot notation access for nested data",
         "✅ Automatic key normalization (camelCase → snake_case)",
-        "✅ Multiple output formats (JSON, YAML, TOML, element, type)",
+        "✅ Multiple output formats (JSON, YAML, TOML, element, type, map, depth)",
         "✅ Automatic string format detection",
         "✅ File loading support (.json, .yaml, .toml)",
         "✅ Array indexing and slicing",
@@ -418,6 +513,8 @@ def main() -> None:
         "✅ Magic methods for type conversion",
         "✅ Comprehensive warning system",
         "✅ Debug mode with detailed logging",
+        "✅ Write/mutation via dot notation (set, delete, deep auto-creation)",
+        "✅ File save/persistence (save to JSON, YAML, TOML with round-trip)",
         "✅ Lazy loading for memory efficiency",
         "✅ Type-safe with full annotations",
         "✅ Zero external dependencies (except TOML for Python < 3.11)",

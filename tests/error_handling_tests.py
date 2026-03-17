@@ -147,9 +147,8 @@ class TestErrorHandling(unittest.TestCase):
         data = {"valid": "data"}
         hydrated = PyHydrate(data)
 
-        # Invalid attribute access should return None primitive
+        # Invalid attribute access should return proxy (None-like for reads)
         invalid_access = hydrated.nonexistent
-        assert isinstance(invalid_access, NotationPrimitive)
         assert invalid_access() is None
 
         # Invalid index access should return None primitive

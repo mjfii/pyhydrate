@@ -144,9 +144,10 @@ class MemoryEfficiencyTests(unittest.TestCase):
         # Verify __slots__ are defined
         assert hasattr(hydrated.__class__, "__slots__")
 
-        # Test that we can't add arbitrary attributes (slots restriction)
-        with self.assertRaises(AttributeError):
-            hydrated.arbitrary_attribute = "test"
+        # With write support, setting attributes is a data write, not an error.
+        # Verify that internal slots still exist and are used.
+        hydrated.arbitrary_attribute = "test"
+        assert hydrated.arbitrary_attribute() == "test"
 
     def test_cache_persistence(self) -> None:
         """Test that cached values persist and aren't recreated."""
