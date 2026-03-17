@@ -35,4 +35,5 @@ class PyHydrate(NotationBase):
         path: str | Path | None = ...,
         *,
         output_format: str | None = ...,
+        original_keys: bool = ...,
     ) -> None: ...

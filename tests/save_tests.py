@@ -161,5 +161,179 @@ class TestSaveFormatOverride(unittest.TestCase):
             path.unlink()
 
 
+class TestSaveOriginalKeys(unittest.TestCase):
+    """Test saving with original_keys=True preserves original key names."""
+
+    def test_yaml_original_keys_spaced(self) -> None:
+        """Save YAML with spaced original keys."""
+        data = PyHydrate({"user": {"my name": "Alice", "age": 25}})
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path, original_keys=True)
+            result = yaml.safe_load(path.read_text(encoding="utf-8"))
+            assert "my name" in result["user"]
+            assert result["user"]["my name"] == "Alice"
+            assert result["user"]["age"] == 25
+        finally:
+            path.unlink()
+
+    def test_yaml_original_keys_camel_case(self) -> None:
+        """Save YAML with camelCase original keys."""
+        data = PyHydrate({"firstName": "Alice", "lastName": "Smith"})
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path, original_keys=True)
+            result = yaml.safe_load(path.read_text(encoding="utf-8"))
+            assert "firstName" in result
+            assert "lastName" in result
+            assert result["firstName"] == "Alice"
+        finally:
+            path.unlink()
+
+    def test_json_original_keys(self) -> None:
+        """Save JSON with original keys preserved."""
+        data = PyHydrate({"my name": "Alice", "myAge": 25})
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path, original_keys=True)
+            result = json.loads(path.read_text(encoding="utf-8"))
+            assert "my name" in result
+            assert "myAge" in result
+            assert result["my name"] == "Alice"
+            assert result["myAge"] == 25
+        finally:
+            path.unlink()
+
+    def test_toml_original_keys(self) -> None:
+        """Save TOML with original keys preserved."""
+        data = PyHydrate({"myTitle": "Test", "myVersion": 1})
+        with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path, original_keys=True)
+            content = path.read_text(encoding="utf-8")
+            assert "myTitle" in content
+            assert "myVersion" in content
+        finally:
+            path.unlink()
+
+    def test_original_keys_after_mutation(self) -> None:
+        """Mutating via normalized key updates original key in raw value."""
+        data = PyHydrate({"user": {"my name": "Alice", "age": 25}})
+        data.user.my_name = "Fred"
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path, original_keys=True)
+            result = yaml.safe_load(path.read_text(encoding="utf-8"))
+            assert result["user"]["my name"] == "Fred"
+            assert "my_name" not in result["user"]
+        finally:
+            path.unlink()
+
+    def test_original_keys_default_false(self) -> None:
+        """Default save uses cleaned/normalized keys."""
+        data = PyHydrate({"firstName": "Alice"})
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path)
+            result = json.loads(path.read_text(encoding="utf-8"))
+            assert "first_name" in result
+            assert "firstName" not in result
+        finally:
+            path.unlink()
+
+    def test_original_keys_nested_deep(self) -> None:
+        """Original keys preserved through deeply nested structures."""
+        data = PyHydrate({
+            "topLevel": {
+                "middleChild": {
+                    "innerKey": "value"
+                }
+            }
+        })
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path, original_keys=True)
+            result = json.loads(path.read_text(encoding="utf-8"))
+            assert "topLevel" in result
+            assert "middleChild" in result["topLevel"]
+            assert "innerKey" in result["topLevel"]["middleChild"]
+        finally:
+            path.unlink()
+
+    def test_original_keys_with_list(self) -> None:
+        """Original keys preserved in dicts nested inside lists."""
+        data = PyHydrate({"myList": [{"itemName": "one"}, {"itemName": "two"}]})
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path, original_keys=True)
+            result = json.loads(path.read_text(encoding="utf-8"))
+            assert "myList" in result
+            assert result["myList"][0]["itemName"] == "one"
+            assert result["myList"][1]["itemName"] == "two"
+        finally:
+            path.unlink()
+
+    def test_original_keys_round_trip(self) -> None:
+        """Round-trip with original keys: load → mutate → save → reload."""
+        original = {"firstName": "Alice", "lastName": "Smith"}
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
+            json.dump(original, f)
+            path = Path(f.name)
+
+        try:
+            data = PyHydrate(path=str(path))
+            data.first_name = "Bob"
+            data.save(path, original_keys=True)
+
+            result = json.loads(path.read_text(encoding="utf-8"))
+            assert result["firstName"] == "Bob"
+            assert result["lastName"] == "Smith"
+        finally:
+            path.unlink()
+
+    def test_original_keys_with_format_override(self) -> None:
+        """Original keys work with explicit format override."""
+        data = PyHydrate({"myKey": "myValue"})
+        with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path, output_format="json", original_keys=True)
+            result = json.loads(path.read_text(encoding="utf-8"))
+            assert "myKey" in result
+        finally:
+            path.unlink()
+
+    def test_original_keys_kebab_case(self) -> None:
+        """Save with kebab-case original keys preserved."""
+        data = PyHydrate({"my-key": "value", "another-key": 42})
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            path = Path(f.name)
+
+        try:
+            data.save(path, original_keys=True)
+            result = yaml.safe_load(path.read_text(encoding="utf-8"))
+            assert "my-key" in result
+            assert "another-key" in result
+        finally:
+            path.unlink()
+
+
 if __name__ == "__main__":
     unittest.main()

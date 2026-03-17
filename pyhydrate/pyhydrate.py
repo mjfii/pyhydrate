@@ -460,6 +460,7 @@ class PyHydrate(NotationBase):
         path: Union[str, Path, None] = None,
         *,
         output_format: Union[str, None] = None,
+        original_keys: bool = False,
     ) -> None:
         """
         Save the current data to a file.
@@ -472,6 +473,9 @@ class PyHydrate(NotationBase):
                 source path from construction.
             output_format: Force a specific format ('json', 'yaml', 'toml').
                 If None, detected from file extension.
+            original_keys: If True, write using the original key names
+                (e.g., "my name", "firstName") instead of the normalized
+                snake_case keys. Defaults to False.
 
         Raises:
             ValueError: If no path is available or format cannot be determined
@@ -484,7 +488,11 @@ class PyHydrate(NotationBase):
         file_path = Path(path)
         fmt = output_format or self._detect_format(file_path)
 
-        content = self._structure(fmt)
+        if original_keys:
+            content = self._serialize_raw(fmt)
+        else:
+            content = self._structure(fmt)
+
         if content is None:
             raise ValueError(f"Cannot serialize to '{fmt}'")
 
@@ -492,7 +500,40 @@ class PyHydrate(NotationBase):
         if not content.endswith("\n"):
             content += "\n"
 
+        file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(content, encoding="utf-8")
+
+    def _serialize_raw(self, fmt: str) -> Union[str, None]:
+        """
+        Serialize the raw value (with original keys) to the given format.
+
+        Args:
+            fmt: The format string ('json', 'yaml', or 'toml')
+
+        Returns:
+            Union[str, None]: The serialized string, or None if unsupported
+        """
+        from .notation.notation_dumper import NotationDumper
+
+        raw = self._structure._raw_value
+        if raw is None:
+            return None
+
+        if fmt == "json":
+            return json.dumps(raw, indent=self._structure._indent)
+        if fmt == "yaml":
+            return yaml.dump(raw, sort_keys=False, Dumper=NotationDumper).rstrip()
+        if fmt == "toml":
+            try:
+                import toml
+            except ImportError:
+                return None
+            if isinstance(raw, dict):
+                return toml.dumps(raw)
+            if isinstance(raw, list):
+                return toml.dumps({"data": raw})
+            return None
+        return None
 
     @staticmethod
     def _detect_format(file_path: Path) -> str:
