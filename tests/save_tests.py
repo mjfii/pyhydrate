@@ -255,13 +255,7 @@ class TestSaveOriginalKeys(unittest.TestCase):
 
     def test_original_keys_nested_deep(self) -> None:
         """Original keys preserved through deeply nested structures."""
-        data = PyHydrate({
-            "topLevel": {
-                "middleChild": {
-                    "innerKey": "value"
-                }
-            }
-        })
+        data = PyHydrate({"topLevel": {"middleChild": {"innerKey": "value"}}})
         with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
             path = Path(f.name)
 

@@ -36,6 +36,10 @@ requires-python = '>=3.8'
 pyhydrate = ["py.typed", "*.pyi"]
 
 [project.optional-dependencies]
+s3 = ["fsspec", "s3fs"]
+azure = ["fsspec", "adlfs"]
+gcs = ["fsspec", "gcsfs"]
+cloud = ["fsspec", "s3fs", "adlfs", "gcsfs"]
 dev = [
     'ruff==0.12.1',
     'build',
@@ -216,6 +220,8 @@ docstring-code-line-length = "dynamic"
 "tests/**/*" = [
     "PLR2004",
     "S101",
+    "S108",
+    "SLF001",
     "TID252",
 ]
 "*.py" = ["G004", "UP004", "S324"]
