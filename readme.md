@@ -59,6 +59,7 @@ pyhydrate/
 │   ├── __init__.py
 │   ├── array_edge_cases_tests.py
 │   ├── call_tests.py
+│   ├── cloud_save_tests.py
 │   ├── dict_get_tests.py
 │   ├── error_handling_tests.py
 │   ├── initialization_tests.py
@@ -91,6 +92,15 @@ Optional (for development):
 
 ```bash
 pip install pyhydrate
+```
+
+**Optional cloud storage support** (for saving to S3, GCS, or Azure Data Lake):
+
+```bash
+pip install pyhydrate[s3]      # Amazon S3
+pip install pyhydrate[gcs]     # Google Cloud Storage
+pip install pyhydrate[azure]   # Azure Data Lake Storage
+pip install pyhydrate[cloud]   # All cloud providers
 ```
 
 **Dependencies**: PyHydrate automatically handles TOML support:
@@ -251,6 +261,11 @@ print(items())  # [99, 3]
 data.save("output.json")
 data.save("output.yaml")
 data.save("output.toml")
+
+# Save to cloud storage (requires optional extras)
+data.save("s3://my-bucket/config.json")
+data.save("gs://my-bucket/config.yaml")
+data.save("abfss://container@account.dfs.core.windows.net/config.json")
 
 # Round-trip: load, modify, save back
 config = PyHydrate(path="config.json")

@@ -9,6 +9,7 @@ Run all tests: `python -m unittest discover -s tests/ -p "*_tests.py"`
 - **`__init__.py`** - Package marker for test discovery.
 - **`array_edge_cases_tests.py`** - Edge cases in array indexing, bounds checking, and error handling for robust array behavior.
 - **`call_tests.py`** - `__call__` method functionality including JSON, YAML, TOML, type, element, depth, map, and value output formats.
+- **`cloud_save_tests.py`** - Cloud storage save functionality: remote path detection for S3/GCS/ADLS URIs, format detection from remote paths, mocked fsspec integration, ImportError handling when fsspec is missing, and verification that local paths are unaffected.
 - **`dict_get_tests.py`** - Dictionary access patterns via dot notation with nested key lookups and key normalization.
 - **`error_handling_tests.py`** - Standardized error handling and warning system validation across all warning types.
 - **`initialization_tests.py`** - Comprehensive initialization tests for all supported input types: primitives, dicts, lists, JSON strings, YAML strings, TOML strings, and file loading.
