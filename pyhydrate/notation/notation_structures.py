@@ -121,9 +121,10 @@ class NotationObject(NotationBase):
             return self._hydrated_cache[key]
 
         # Key not found, return a proxy for potential write-through
-        from .notation_proxy import NotationProxy
+        from .notation_proxy import _DEFAULT_MAX_PROXY_DEPTH, NotationProxy
 
-        return NotationProxy(parent=self, parent_key=key)
+        max_depth = self._kwargs.get("max_proxy_depth", _DEFAULT_MAX_PROXY_DEPTH)
+        return NotationProxy(parent=self, parent_key=key, max_depth=max_depth)
 
     def _get_cleaned_value(self) -> Union[dict, None]:
         """

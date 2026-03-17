@@ -10,12 +10,14 @@ organization and maintainability.
 from .access_pattern_warning import AccessPatternWarning
 from .api_usage_warning import APIUsageWarning
 from .format_warning_message import format_warning_message
+from .immutable_conversion_warning import ImmutableConversionWarning
 from .pyhydrate_warning import PyHydrateWarning
 from .type_conversion_warning import TypeConversionWarning
 
 __all__ = [
     "APIUsageWarning",
     "AccessPatternWarning",
+    "ImmutableConversionWarning",
     "PyHydrateWarning",
     "TypeConversionWarning",
     "format_warning_message",

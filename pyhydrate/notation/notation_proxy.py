@@ -12,6 +12,8 @@ This enables patterns like:
 
 from typing import Any, Union
 
+_DEFAULT_MAX_PROXY_DEPTH = 100
+
 
 class NotationProxy:
     """
@@ -28,18 +30,29 @@ class NotationProxy:
     a None value for backward compatibility.
     """
 
-    __slots__ = ("_proxy_key", "_proxy_parent")
+    __slots__ = ("_proxy_depth", "_proxy_key", "_proxy_max_depth", "_proxy_parent")
 
-    def __init__(self, *, parent: Any, parent_key: str) -> None:
+    def __init__(
+        self,
+        *,
+        parent: Any,
+        parent_key: str,
+        depth: int = 1,
+        max_depth: int = _DEFAULT_MAX_PROXY_DEPTH,
+    ) -> None:
         """
         Initialize with the parent object and the missing key.
 
         Parameters:
             parent: The parent NotationObject, PyHydrate, or NotationProxy
             parent_key: The key that was not found in the parent
+            depth: Current depth of this proxy in the chain
+            max_depth: Maximum allowed proxy chain depth
         """
         object.__setattr__(self, "_proxy_parent", parent)
         object.__setattr__(self, "_proxy_key", parent_key)
+        object.__setattr__(self, "_proxy_depth", depth)
+        object.__setattr__(self, "_proxy_max_depth", max_depth)
 
     def __getattr__(self, key: str) -> "NotationProxy":
         """
@@ -50,8 +63,23 @@ class NotationProxy:
 
         Returns:
             NotationProxy: A new proxy linked to this one
+
+        Raises:
+            RecursionError: If the proxy chain exceeds max_proxy_depth
         """
-        return NotationProxy(parent=self, parent_key=key)
+        next_depth = self._proxy_depth + 1
+        if next_depth > self._proxy_max_depth:
+            raise RecursionError(
+                f"Maximum proxy chain depth ({self._proxy_max_depth}) exceeded. "
+                f"This usually indicates an unintended deep attribute access. "
+                f"If intentional, set max_proxy_depth to a higher value."
+            )
+        return NotationProxy(
+            parent=self,
+            parent_key=key,
+            depth=next_depth,
+            max_depth=self._proxy_max_depth,
+        )
 
     def __setattr__(self, key: str, value: Any) -> None:
         """
@@ -169,5 +197,20 @@ class NotationProxy:
 
         Returns:
             NotationProxy: A new proxy
+
+        Raises:
+            RecursionError: If the proxy chain exceeds max_proxy_depth
         """
-        return NotationProxy(parent=self, parent_key=index)
+        next_depth = self._proxy_depth + 1
+        if next_depth > self._proxy_max_depth:
+            raise RecursionError(
+                f"Maximum proxy chain depth ({self._proxy_max_depth}) exceeded. "
+                f"This usually indicates an unintended deep attribute access. "
+                f"If intentional, set max_proxy_depth to a higher value."
+            )
+        return NotationProxy(
+            parent=self,
+            parent_key=index,
+            depth=next_depth,
+            max_depth=self._proxy_max_depth,
+        )

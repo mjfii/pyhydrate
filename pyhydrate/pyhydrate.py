@@ -49,6 +49,7 @@ Architecture:
 import contextlib
 import json
 import sys
+import warnings
 from json import JSONDecodeError
 from pathlib import Path, PurePosixPath
 from typing import Any, Union
@@ -66,6 +67,7 @@ else:
 
 # Import at top level to avoid PLC0415
 from .error_handling import setup_logger
+from .exceptions import ImmutableConversionWarning
 from .notation import (
     NotationArray,
     NotationObject,
@@ -197,7 +199,9 @@ class PyHydrate(NotationBase):
     # MAGIC METHODS
     def __init__(
         self,
-        source_value: Union[dict, list, str, float, bool, None] = None,
+        source_value: Union[
+            dict, list, str, float, bool, tuple, set, frozenset, range, None
+        ] = None,
         *,
         path: Union[str, Path, None] = None,
         **kwargs: Any,
@@ -274,6 +278,19 @@ class PyHydrate(NotationBase):
         if isinstance(source_value, str):
             source_value = yaml.safe_load(source_value)
 
+        # Convert iterable types to list, warning for immutable inputs
+        if isinstance(source_value, (tuple, frozenset)):
+            original_type = type(source_value).__name__
+            warnings.warn(
+                f"Immutable type '{original_type}' was converted to a mutable list. "
+                f"Modifications to this data will not be reflected in the original {original_type}.",
+                ImmutableConversionWarning,
+                stacklevel=2,
+            )
+            source_value = list(source_value)
+        elif isinstance(source_value, (set, range)):
+            source_value = list(source_value)
+
         if isinstance(source_value, dict):
             self._root_type = dict
             self._structure = NotationObject(source_value, 0, **kwargs)
@@ -287,8 +304,11 @@ class PyHydrate(NotationBase):
             self._root_type = type(None)
             self._structure = NotationPrimitive(None, 0, **kwargs)
         else:
-            self._root_type = type(None)
-            self._structure = None
+            raise TypeError(
+                f"PyHydrate does not support {type(source_value).__name__!r} inputs. "
+                f"Supported types: dict, list, str (JSON/YAML/TOML), int, float, bool, None, "
+                f"tuple, set, frozenset, range."
+            )
 
     def __str__(self) -> str:
         """
@@ -368,7 +388,10 @@ class PyHydrate(NotationBase):
                 The wrapped value at the specified key, or proxy if not found
         """
         if isinstance(self._structure, NotationPrimitive):
-            return NotationProxy(parent=self, parent_key=key)
+            from .notation.notation_proxy import _DEFAULT_MAX_PROXY_DEPTH
+
+            max_depth = self._kwargs.get("max_proxy_depth", _DEFAULT_MAX_PROXY_DEPTH)
+            return NotationProxy(parent=self, parent_key=key, max_depth=max_depth)
         return getattr(self._structure, key)
 
     def __getitem__(

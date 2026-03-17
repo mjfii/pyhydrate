@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 from .notation import NotationArray, NotationObject, NotationPrimitive
 from .notation.notation_base import NotationBase
@@ -11,9 +11,11 @@ class PyHydrate(NotationBase):
 
     def __init__(
         self,
-        source_value: dict | list | str | float | bool | None = ...,
+        source_value: Union[
+            dict, list, str, float, bool, tuple, set, frozenset, range, None
+        ] = ...,
         *,
-        path: str | Path | None = ...,
+        path: Union[str, Path, None] = ...,
         **kwargs: Any,
     ) -> None: ...
     def __int__(self) -> int: ...
