@@ -151,6 +151,7 @@ Load data from JSON, YAML, or TOML strings - format is detected automatically:
 
 ```python
 # JSON string
+from pyhydrate import PyHydrate
 json_config = '{"database": {"host": "localhost", "port": 5432}}'
 config = PyHydrate(json_config)
 
@@ -178,6 +179,7 @@ Load data directly from files:
 
 ```python
 # Supports .json, .yaml, .yml, and .toml files
+from pyhydrate import PyHydrate
 config = PyHydrate(path="config.json")
 settings = PyHydrate(path="settings.yaml")
 project = PyHydrate(path="pyproject.toml")
@@ -187,6 +189,8 @@ project = PyHydrate(path="pyproject.toml")
 Automatically converts different key formats to snake_case:
 
 ```python
+from pyhydrate import PyHydrate
+
 data = {
     "firstName": "John",
     "last-name": "Doe",
@@ -202,6 +206,8 @@ print(py_data.email_address())   # "john@example.com"
 ### Multiple Output Formats
 
 ```python
+from pyhydrate import PyHydrate
+
 py_data = PyHydrate({"user": {"name": "John", "age": 30}})
 
 # Different output formats
@@ -217,6 +223,8 @@ print(py_data.user('element'))  # Returns {"dict": {...}}
 Handle lists and nested arrays easily:
 
 ```python
+from pyhydrate import PyHydrate
+
 data = {
     "users": [
         {"name": "John", "age": 30},
@@ -234,6 +242,8 @@ print(py_data.users[1].age())   # 25
 Set values via dot notation, create structures from scratch, and save to files:
 
 ```python
+from pyhydrate import PyHydrate
+
 # Modify existing data
 data = PyHydrate({"name": "Alice", "age": 25})
 data.name = "Bob"
@@ -277,6 +287,8 @@ config.save()  # Saves back to the original file
 Get detailed access logging:
 
 ```python
+from pyhydrate import PyHydrate
+
 data = {"level1": {"level2": {"value": "test"}}}
 py_data = PyHydrate(data, debug=True)
 
@@ -324,6 +336,7 @@ print(result)  # None (still works, just silent)
 Convert PyHydrate objects to Python primitives:
 
 ```python
+from pyhydrate import PyHydrate
 data = PyHydrate({"count": "42", "price": "19.99", "active": "true"})
 
 # Use Python's built-in type conversion
