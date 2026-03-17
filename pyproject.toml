@@ -225,6 +225,8 @@ docstring-code-line-length = "dynamic"
     "TID252",
 ]
 "*.py" = ["G004", "UP004", "S324"]
+# Type stubs use Union[] for PyCharm/IDE compatibility
+"*.pyi" = ["UP007"]
 # Library internals access their own private members across module boundaries
 "pyhydrate/**/*" = ["SLF001"]
 
