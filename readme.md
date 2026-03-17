@@ -47,6 +47,7 @@ pyhydrate/
 │   │   ├── type_conversion_warning.py
 │   │   ├── access_pattern_warning.py
 │   │   ├── api_usage_warning.py
+│   │   ├── immutable_conversion_warning.py
 │   │   └── format_warning_message.py
 │   └── notation/
 │       ├── __init__.py
@@ -63,16 +64,20 @@ pyhydrate/
 │   ├── dict_get_tests.py
 │   ├── error_handling_tests.py
 │   ├── initialization_tests.py
+│   ├── input_type_tests.py
 │   ├── list_get_tests.py
 │   ├── magic_methods_tests.py
 │   ├── memory_efficiency_tests.py
 │   ├── none_serialization_tests.py
 │   ├── primitive_get_tests.py
+│   ├── proxy_depth_tests.py
 │   ├── repr_method_tests.py
 │   ├── save_tests.py
 │   └── write_tests.py
 ├── claude.md
 ├── demo.py
+├── issues.md
+├── gh-issue-thread-safety.md
 ├── license
 ├── pyproject.toml
 └── readme.md
@@ -343,6 +348,22 @@ data = PyHydrate({"count": "42", "price": "19.99", "active": "true"})
 count = int(data.count())      # 42
 price = float(data.price())    # 19.99
 is_active = bool(data.active()) # True
+```
+
+## Thread Safety
+
+PyHydrate instances are **not** thread-safe. Internal mutable state (`_raw_value`, `_hydrated_cache`, `_key_mappings`) is not protected by synchronization primitives. If you need to share data across threads, either create separate `PyHydrate` instances per thread or use external synchronization (e.g., `threading.Lock`).
+
+```python
+import threading
+from pyhydrate import PyHydrate
+
+lock = threading.Lock()
+shared = PyHydrate({"counter": 0})
+
+# Safe pattern: external lock
+with lock:
+    shared.counter = int(shared.counter()) + 1
 ```
 
 ## License

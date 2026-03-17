@@ -26,6 +26,8 @@ python -m unittest tests/repr_method_tests.py
 python -m unittest tests/write_tests.py
 python -m unittest tests/save_tests.py
 python -m unittest tests/cloud_save_tests.py
+python -m unittest tests/input_type_tests.py
+python -m unittest tests/proxy_depth_tests.py
 ```
 
 Run tests with verbose output:
@@ -222,7 +224,7 @@ PyHydrate is a Python library that enables dot notation access and mutation of n
 **Notation System Architecture:**
 - `pyhydrate/notation/notation_base.py` - Unified base class providing all shared functionality including debug printing, key casting (camelCase/kebab-case to snake_case), common magic methods, representation formatting, `_unwrap()` static method, and `_create_child()` factory with parent tracking
 - `pyhydrate/notation/notation_primitive.py` - Handles primitive values (str, int, float, bool, None)
-- `pyhydrate/notation/notation_proxy.py` - Lightweight proxy for deep auto-creation of missing keys; records parent chain and materializes intermediate dicts on `__setattr__`
+- `pyhydrate/notation/notation_proxy.py` - Lightweight proxy for deep auto-creation of missing keys; records parent chain and materializes intermediate dicts on `__setattr__`; enforces configurable max chain depth (default 100, via `max_proxy_depth` kwarg) with `_proxy_depth`/`_proxy_max_depth` slots
 - `pyhydrate/notation/notation_structures.py` - Contains `NotationObject` (dict wrapper with `__setattr__`/`__delattr__`) and `NotationArray` (list wrapper with `__setitem__`/`__delitem__`) classes
 - `pyhydrate/notation/notation_dumper.py` - Custom YAML dumper for consistent output formatting
 - `pyhydrate/types.py` - Centralized type definitions to avoid circular import dependencies
@@ -233,6 +235,7 @@ PyHydrate is a Python library that enables dot notation access and mutation of n
   - `type_conversion_warning.py` - Warnings for type conversion issues
   - `access_pattern_warning.py` - Warnings for invalid access attempts
   - `api_usage_warning.py` - Warnings for incorrect API usage
+  - `immutable_conversion_warning.py` - Warnings when immutable types (tuple, frozenset) are converted to mutable list
   - `format_warning_message.py` - Standardized warning message formatting utility
 - `pyhydrate/error_handling.py` - Centralized error handling utilities and logging setup
 
@@ -241,6 +244,8 @@ PyHydrate is a Python library that enables dot notation access and mutation of n
 **Automatic Data Type Detection:**
 - JSON/YAML/TOML string parsing in constructor
 - Parsing order: JSON → TOML → YAML for string inputs
+- Iterable conversion: `set`, `frozenset`, `tuple`, `range` → `list` (immutable types emit `ImmutableConversionWarning`)
+- Unsupported types raise `TypeError` with actionable message
 - Recursive wrapping of nested structures
 - Type-specific handling for primitives vs structures
 
@@ -324,6 +329,8 @@ PyHydrate is a Python library that enables dot notation access and mutation of n
 - `tests/write_tests.py` - Write (mutation) support: setting existing/new keys, deep auto-creation, creating from scratch, array mutation, deletion, key normalization on write, serialization after mutation
 - `tests/save_tests.py` - File save/write functionality: saving to JSON/YAML/TOML, round-trip, source path save-back, format override
 - `tests/cloud_save_tests.py` - Cloud storage save functionality: remote path detection, format detection from remote URIs, mocked fsspec integration, ImportError handling, local path isolation
+- `tests/input_type_tests.py` - Input type validation: conversion of set/frozenset/tuple/range to list, ImmutableConversionWarning, TypeError for unsupported types, serialization and mutation after conversion, regression tests
+- `tests/proxy_depth_tests.py` - Proxy chain depth limiting: default depth of 100, custom max_proxy_depth via kwargs, depth tracking through __getattr__/__getitem__, error messages, write-through within limits
 - Test data located in `pyhydrate/data/` as JSON, YAML, and TOML files
 
 **Test Discovery:** All test files follow the `*_tests.py` naming pattern and are automatically discovered by the CI system.
@@ -341,7 +348,7 @@ This codebase follows modern Python development practices:
 - Modern Python patterns: uses `pathlib.Path.read_text()`, keyword-only parameters, and proper type comparisons
 
 **Testing Standards:**
-- Comprehensive test coverage with 239 tests across 14 test files
+- Comprehensive test coverage with 308 tests across 16 test files
 - Uses unittest framework with modern `assert` statements
 - All tests pass after linting and formatting improvements
 - Test data is organized in dedicated `pyhydrate/data/` directory
@@ -394,6 +401,8 @@ This codebase follows modern Python development practices:
 - `__setattr__` uses `_INTERNAL_ATTRS` frozenset guard to distinguish slot writes from data writes
 - Writes go to `_raw_value` directly; `_cleaned_value` is computed on demand so it auto-reflects changes
 - `NotationProxy` is never cached in `_hydrated_cache` to ensure post-materialization access creates proper objects
+- `NotationProxy` enforces max chain depth via `_proxy_depth`/`_proxy_max_depth` slots; default 100, configurable via `max_proxy_depth` kwarg
+- Constructor converts `set`/`frozenset`/`tuple`/`range` to `list`; immutable types emit `ImmutableConversionWarning`; unsupported types raise `TypeError`
 
 ### Known Issues & Limitations
 - TODO comments indicate areas for future enhancement
@@ -411,6 +420,9 @@ This codebase follows modern Python development practices:
 - ✅ **Documentation**: Added comprehensive Mermaid diagrams showing class hierarchy, data flow, and dependency management
 - ✅ **PEP 561 Type Stubs**: Added `py.typed` marker and `pyhydrate.pyi` stub to resolve PyCharm/IDE `__slots__` and unresolved attribute inspections for dynamic dot notation access
 - ✅ **Cloud Storage Save**: `save()` supports remote URIs (`s3://`, `gs://`, `abfss://`) via `fsspec` with optional extras (`pip install pyhydrate[cloud]`). Lazy-imports fsspec to keep the core dependency-free.
+- ✅ **Input Type Validation (Issue #1)**: Constructor now accepts `set`, `frozenset`, `tuple`, and `range` (converted to `list`). Immutable types emit `ImmutableConversionWarning`. Unsupported types raise `TypeError` with actionable message. 51 tests across 10 test classes.
+- ✅ **Proxy Depth Limiting (Issue #3)**: `NotationProxy` enforces configurable max chain depth (default 100) via `max_proxy_depth` kwarg, preventing unbounded memory allocation from runaway attribute access. 18 tests across 7 test classes.
+- ✅ **Thread Safety Documentation (Issue #4)**: Added "Thread Safety" section to `readme.md` documenting that instances are not thread-safe, with recommended `threading.Lock` pattern for shared access.
 
 ### Continuous Integration
 The project uses GitHub Actions for automated testing:
@@ -429,7 +441,7 @@ The project uses GitHub Actions for automated testing:
 - CI uses `python -m unittest discover -s tests/ -p "*_tests.py"` for automatic test file detection
 - New test files following the `*_tests.py` pattern are automatically included
 - No need to manually update CI configuration when adding new test files
-- Runs all 239 tests across 14 test files on every push
+- Runs all 308 tests across 16 test files on every push
 
 ### Ruff Configuration
 The project uses a comprehensive ruff configuration in `pyproject.toml` (under `[tool.ruff]`) with:
@@ -441,7 +453,7 @@ The project uses a comprehensive ruff configuration in `pyproject.toml` (under `
   - TODO comments (FIX002) - allowed for development notes
   - unittest.assertRaises (PT027) - project uses unittest, not pytest
   - Magic value comparisons (PLR2004) - allowed in tests
-- **Per-file ignores**: Test files have relaxed rules for magic values and assertions; library internals have SLF001 (private member access) suppressed for cross-module internal access
+- **Per-file ignores**: Test files have relaxed rules for magic values and assertions; library internals have SLF001 (private member access) suppressed for cross-module internal access; `.pyi` type stubs have UP007 suppressed to allow `Union[]` syntax for PyCharm/IDE compatibility
 
 Current status: **All linting issues resolved** ✅
 
