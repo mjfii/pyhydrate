@@ -31,6 +31,8 @@ pyhydrate/
 ├── pyhydrate/
 │   ├── __init__.py
 │   ├── pyhydrate.py
+│   ├── pyhydrate.pyi
+│   ├── py.typed
 │   ├── error_handling.py
 │   ├── types.py
 │   ├── data/

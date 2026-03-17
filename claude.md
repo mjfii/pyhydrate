@@ -213,6 +213,11 @@ PyHydrate is a Python library that enables dot notation access and mutation of n
 **Main Entry Point:**
 - `pyhydrate/pyhydrate.py` - The `PyHydrate` class that serves as the main entry point, inheriting directly from `NotationBase`. Supports `save(path, output_format=)` for file persistence and auto-promotes to `NotationObject` on first write when constructed empty.
 
+**Type Stubs (PEP 561):**
+- `pyhydrate/pyhydrate.pyi` - Type stub declaring `__getattr__` returning `Any` so IDEs (PyCharm, VS Code) recognize dynamic dot notation access without flagging `__slots__` or unresolved attribute warnings.
+- `pyhydrate/py.typed` - PEP 561 marker file signaling the package ships inline type information.
+- Both files are included in the built package via `[tool.setuptools.package-data]` in `pyproject.toml`.
+
 **Notation System Architecture:**
 - `pyhydrate/notation/notation_base.py` - Unified base class providing all shared functionality including debug printing, key casting (camelCase/kebab-case to snake_case), common magic methods, representation formatting, `_unwrap()` static method, and `_create_child()` factory with parent tracking
 - `pyhydrate/notation/notation_primitive.py` - Handles primitive values (str, int, float, bool, None)
@@ -398,6 +403,7 @@ This codebase follows modern Python development practices:
 - ✅ **Code Quality**: All linting issues resolved, code formatting standardized
 - ✅ **CI Enhancement**: Added automated linting and formatting checks to GitHub Actions workflows
 - ✅ **Documentation**: Added comprehensive Mermaid diagrams showing class hierarchy, data flow, and dependency management
+- ✅ **PEP 561 Type Stubs**: Added `py.typed` marker and `pyhydrate.pyi` stub to resolve PyCharm/IDE `__slots__` and unresolved attribute inspections for dynamic dot notation access
 
 ### Continuous Integration
 The project uses GitHub Actions for automated testing:
