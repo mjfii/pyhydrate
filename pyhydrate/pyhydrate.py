@@ -50,7 +50,7 @@ import contextlib
 import json
 import sys
 from json import JSONDecodeError
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Union
 
 import yaml
@@ -455,36 +455,90 @@ class PyHydrate(NotationBase):
         else:
             raise TypeError("Cannot delete items on non-array structure")
 
+    # Cloud storage URI schemes supported via fsspec
+    _REMOTE_SCHEMES: frozenset = frozenset(
+        {"s3", "s3a", "gs", "gcs", "abfs", "abfss", "az"}
+    )
+
+    @staticmethod
+    def _is_remote_path(path: Union[str, Path]) -> bool:
+        """
+        Check if a path is a remote cloud storage URI.
+
+        Args:
+            path: The path to check
+
+        Returns:
+            bool: True if the path uses a known remote scheme
+        """
+        path_str = str(path)
+        scheme = path_str.split("://", 1)[0].lower() if "://" in path_str else ""
+        return scheme in PyHydrate._REMOTE_SCHEMES
+
+    @staticmethod
+    def _write_remote(path: str, content: str) -> None:
+        """
+        Write content to a remote cloud storage path via fsspec.
+
+        Args:
+            path: Remote URI (e.g., s3://bucket/key.json)
+            content: The string content to write
+
+        Raises:
+            ImportError: If fsspec is not installed
+        """
+        try:
+            import fsspec
+        except ImportError as err:
+            scheme = path.split("://", 1)[0]
+            raise ImportError(
+                f"fsspec is required for remote save to '{scheme}://'. "
+                f"Install it with: pip install pyhydrate[cloud]"
+            ) from err
+
+        with fsspec.open(path, "w") as f:
+            f.write(content)
+
     def save(
         self,
         path: Union[str, Path, None] = None,
         *,
         output_format: Union[str, None] = None,
+        original_keys: bool = False,
     ) -> None:
         """
-        Save the current data to a file.
+        Save the current data to a file (local or remote cloud storage).
 
         Determines the output format from the file extension (or explicit
-        output_format parameter) and writes the serialized data.
+        output_format parameter) and writes the serialized data. Supports
+        local paths and remote cloud storage URIs (s3://, gs://, abfss://)
+        via fsspec.
 
         Args:
             path: File path to write to. If None, uses the original
-                source path from construction.
+                source path from construction. Accepts local paths or
+                remote URIs (e.g., "s3://bucket/key.json").
             output_format: Force a specific format ('json', 'yaml', 'toml').
                 If None, detected from file extension.
+            original_keys: If True, write using the original key names
+                (e.g., "my name", "firstName") instead of the normalized
+                snake_case keys. Defaults to False.
 
         Raises:
             ValueError: If no path is available or format cannot be determined
+            ImportError: If saving to a remote path without fsspec installed
         """
         if path is None:
             path = self._source_path
         if path is None:
             raise ValueError("No file path specified and no source path available")
 
-        file_path = Path(path)
+        # Use PurePosixPath for format detection (works for both local and remote)
+        file_path = PurePosixPath(str(path))
         fmt = output_format or self._detect_format(file_path)
 
-        content = self._structure(fmt)
+        content = self._serialize_raw(fmt) if original_keys else self._structure(fmt)
+
         if content is None:
             raise ValueError(f"Cannot serialize to '{fmt}'")
 
@@ -492,15 +546,52 @@ class PyHydrate(NotationBase):
         if not content.endswith("\n"):
             content += "\n"
 
-        file_path.write_text(content, encoding="utf-8")
+        if self._is_remote_path(path):
+            self._write_remote(str(path), content)
+        else:
+            local_path = Path(str(path))
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            local_path.write_text(content, encoding="utf-8")
+
+    def _serialize_raw(self, fmt: str) -> Union[str, None]:
+        """
+        Serialize the raw value (with original keys) to the given format.
+
+        Args:
+            fmt: The format string ('json', 'yaml', or 'toml')
+
+        Returns:
+            Union[str, None]: The serialized string, or None if unsupported
+        """
+        from .notation.notation_dumper import NotationDumper
+
+        raw = self._structure._raw_value
+        if raw is None:
+            return None
+
+        if fmt == "json":
+            return json.dumps(raw, indent=self._structure._indent)
+        if fmt == "yaml":
+            return yaml.dump(raw, sort_keys=False, Dumper=NotationDumper).rstrip()
+        if fmt == "toml":
+            try:
+                import toml
+            except ImportError:
+                return None
+            if isinstance(raw, dict):
+                return toml.dumps(raw)
+            if isinstance(raw, list):
+                return toml.dumps({"data": raw})
+            return None
+        return None
 
     @staticmethod
-    def _detect_format(file_path: Path) -> str:
+    def _detect_format(file_path: Union[Path, PurePosixPath]) -> str:
         """
         Detect the serialization format from a file extension.
 
         Args:
-            file_path: The file path to inspect
+            file_path: The file path to inspect (local Path or PurePosixPath)
 
         Returns:
             str: The format string ('json', 'yaml', or 'toml')

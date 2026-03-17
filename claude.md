@@ -25,6 +25,7 @@ python -m unittest tests/array_edge_cases_tests.py
 python -m unittest tests/repr_method_tests.py
 python -m unittest tests/write_tests.py
 python -m unittest tests/save_tests.py
+python -m unittest tests/cloud_save_tests.py
 ```
 
 Run tests with verbose output:
@@ -211,7 +212,12 @@ PyHydrate is a Python library that enables dot notation access and mutation of n
 ### Core Components
 
 **Main Entry Point:**
-- `pyhydrate/pyhydrate.py` - The `PyHydrate` class that serves as the main entry point, inheriting directly from `NotationBase`. Supports `save(path, output_format=)` for file persistence and auto-promotes to `NotationObject` on first write when constructed empty.
+- `pyhydrate/pyhydrate.py` - The `PyHydrate` class that serves as the main entry point, inheriting directly from `NotationBase`. Supports `save(path, output_format=, original_keys=)` for file persistence (local and cloud storage via `fsspec`) and auto-promotes to `NotationObject` on first write when constructed empty.
+
+**Type Stubs (PEP 561):**
+- `pyhydrate/pyhydrate.pyi` - Type stub declaring `__getattr__` returning `Any` so IDEs (PyCharm, VS Code) recognize dynamic dot notation access without flagging `__slots__` or unresolved attribute warnings.
+- `pyhydrate/py.typed` - PEP 561 marker file signaling the package ships inline type information.
+- Both files are included in the built package via `[tool.setuptools.package-data]` in `pyproject.toml`.
 
 **Notation System Architecture:**
 - `pyhydrate/notation/notation_base.py` - Unified base class providing all shared functionality including debug printing, key casting (camelCase/kebab-case to snake_case), common magic methods, representation formatting, `_unwrap()` static method, and `_create_child()` factory with parent tracking
@@ -257,10 +263,14 @@ PyHydrate is a Python library that enables dot notation access and mutation of n
 - Auto-promotion from primitive to `NotationObject` on first write
 
 **File Persistence:**
-- `save(path=None, *, output_format=None)` on `PyHydrate`
+- `save(path=None, *, output_format=None, original_keys=False)` on `PyHydrate`
 - Format detected from file extension (`.json`, `.yaml`, `.yml`, `.toml`)
 - Explicit `output_format` parameter overrides extension detection
 - `_source_path` stored from constructor's `path=` parameter; `save()` with no args writes back
+- Cloud storage support via `fsspec`: S3 (`s3://`), GCS (`gs://`, `gcs://`), ADLS (`abfs://`, `abfss://`, `az://`)
+- Remote path detection via `_is_remote_path()` and `_REMOTE_SCHEMES` frozenset
+- `_write_remote()` lazy-imports `fsspec` and writes via `fsspec.open()`; raises `ImportError` with install hint if missing
+- Optional extras in `pyproject.toml`: `s3`, `azure`, `gcs`, `cloud`
 
 **Output Formats:**
 - Call with no args or 'value': returns cleaned value
@@ -313,6 +323,7 @@ PyHydrate is a Python library that enables dot notation access and mutation of n
 - `tests/repr_method_tests.py` - `__repr__` method functionality and warning prevention
 - `tests/write_tests.py` - Write (mutation) support: setting existing/new keys, deep auto-creation, creating from scratch, array mutation, deletion, key normalization on write, serialization after mutation
 - `tests/save_tests.py` - File save/write functionality: saving to JSON/YAML/TOML, round-trip, source path save-back, format override
+- `tests/cloud_save_tests.py` - Cloud storage save functionality: remote path detection, format detection from remote URIs, mocked fsspec integration, ImportError handling, local path isolation
 - Test data located in `pyhydrate/data/` as JSON, YAML, and TOML files
 
 **Test Discovery:** All test files follow the `*_tests.py` naming pattern and are automatically discovered by the CI system.
@@ -330,7 +341,7 @@ This codebase follows modern Python development practices:
 - Modern Python patterns: uses `pathlib.Path.read_text()`, keyword-only parameters, and proper type comparisons
 
 **Testing Standards:**
-- Comprehensive test coverage with 203 tests across 13 test files
+- Comprehensive test coverage with 239 tests across 14 test files
 - Uses unittest framework with modern `assert` statements
 - All tests pass after linting and formatting improvements
 - Test data is organized in dedicated `pyhydrate/data/` directory
@@ -398,6 +409,8 @@ This codebase follows modern Python development practices:
 - ✅ **Code Quality**: All linting issues resolved, code formatting standardized
 - ✅ **CI Enhancement**: Added automated linting and formatting checks to GitHub Actions workflows
 - ✅ **Documentation**: Added comprehensive Mermaid diagrams showing class hierarchy, data flow, and dependency management
+- ✅ **PEP 561 Type Stubs**: Added `py.typed` marker and `pyhydrate.pyi` stub to resolve PyCharm/IDE `__slots__` and unresolved attribute inspections for dynamic dot notation access
+- ✅ **Cloud Storage Save**: `save()` supports remote URIs (`s3://`, `gs://`, `abfss://`) via `fsspec` with optional extras (`pip install pyhydrate[cloud]`). Lazy-imports fsspec to keep the core dependency-free.
 
 ### Continuous Integration
 The project uses GitHub Actions for automated testing:
@@ -416,7 +429,7 @@ The project uses GitHub Actions for automated testing:
 - CI uses `python -m unittest discover -s tests/ -p "*_tests.py"` for automatic test file detection
 - New test files following the `*_tests.py` pattern are automatically included
 - No need to manually update CI configuration when adding new test files
-- Runs all 203 tests across 13 test files on every push
+- Runs all 239 tests across 14 test files on every push
 
 ### Ruff Configuration
 The project uses a comprehensive ruff configuration in `pyproject.toml` (under `[tool.ruff]`) with:
