@@ -1,4 +1,4 @@
-# .github
+# github
 
 GitHub configuration files for community standards, issue/PR templates, and CI/CD workflows.
 
