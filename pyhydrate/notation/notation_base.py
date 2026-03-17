@@ -83,7 +83,15 @@ class NotationBase(object):
     )
 
     # Memory optimization with __slots__
-    __slots__ = ("_call", "_debug", "_depth", "_kwargs", "_raw_value")
+    __slots__ = (
+        "_call",
+        "_debug",
+        "_depth",
+        "_kwargs",
+        "_parent",
+        "_parent_key",
+        "_raw_value",
+    )
 
     # INTERNAL METHODS
     def _cast_key(self, string: str) -> str:
@@ -337,12 +345,41 @@ class NotationBase(object):
         """
         return self._raw_value
 
-    def _create_child(self, value: Union[dict, list, Any]) -> "NotationBase":
+    @staticmethod
+    def _unwrap(value: Any) -> Any:
+        """
+        Unwrap notation objects back to raw Python values.
+
+        Parameters:
+            value: A notation object or plain value
+
+        Returns:
+            The raw Python value
+        """
+        from .notation_primitive import NotationPrimitive
+        from .notation_structures import NotationArray, NotationObject
+
+        if isinstance(value, (NotationObject, NotationArray, NotationPrimitive)):
+            return value._raw_value
+        # Check for PyHydrate (avoid circular import by duck-typing)
+        if hasattr(value, "_structure"):
+            return NotationBase._unwrap(value._structure)
+        return value
+
+    def _create_child(
+        self,
+        value: Union[dict, list, Any],
+        *,
+        parent: "NotationBase" = None,
+        parent_key: Any = None,
+    ) -> "NotationBase":
         """
         Factory method for creating child notation objects.
 
         Parameters:
             value: The raw value to wrap
+            parent: The parent notation object
+            parent_key: The key in the parent's _raw_value
 
         Returns:
             NotationBase: The appropriate notation object
@@ -350,14 +387,23 @@ class NotationBase(object):
         if isinstance(value, dict):
             from .notation_structures import NotationObject
 
-            return NotationObject(value, self._depth, **self._kwargs)
+            child = NotationObject(value, self._depth, **self._kwargs)
+            child._parent = parent
+            child._parent_key = parent_key
+            return child
         if isinstance(value, list):
             from .notation_structures import NotationArray
 
-            return NotationArray(value, self._depth, **self._kwargs)
+            child = NotationArray(value, self._depth, **self._kwargs)
+            child._parent = parent
+            child._parent_key = parent_key
+            return child
         from .notation_primitive import NotationPrimitive
 
-        return NotationPrimitive(value, self._depth, **self._kwargs)
+        child = NotationPrimitive(value, self._depth, **self._kwargs)
+        child._parent = parent
+        child._parent_key = parent_key
+        return child
 
     @property
     def _map(self) -> Union[dict, None]:

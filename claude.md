@@ -23,6 +23,9 @@ python -m unittest tests/initialization_tests.py
 python -m unittest tests/error_handling_tests.py
 python -m unittest tests/array_edge_cases_tests.py
 python -m unittest tests/repr_method_tests.py
+python -m unittest tests/write_tests.py
+python -m unittest tests/save_tests.py
+python -m unittest tests/cloud_save_tests.py
 ```
 
 Run tests with verbose output:
@@ -123,7 +126,7 @@ python demo.py
 
 ### TOML Support
 
-PyHydrate now supports TOML serialization via the 'toml' callable argument:
+PyHydrate supports TOML serialization via the 'toml' callable argument:
 
 ```python
 from pyhydrate import PyHydrate
@@ -139,7 +142,7 @@ print(data('toml'))
 
 # Nested object to TOML
 print(data.database('toml'))
-# Output: 
+# Output:
 # host = "localhost"
 # port = 5432
 # name = "mydb"
@@ -155,7 +158,7 @@ print(list_data('toml'))
 # Output:
 # [[data]]
 # name = "item1"
-# 
+#
 # [[data]]
 # name = "item2"
 ```
@@ -167,13 +170,14 @@ print(list_data('toml'))
 
 ## Project Architecture
 
-PyHydrate is a Python library that enables dot notation access to nested data structures (dicts, lists, JSON, YAML, TOML) with graceful error handling and automatic key normalization.
+PyHydrate is a Python library that enables dot notation access and mutation of nested data structures (dicts, lists, JSON, YAML, TOML) with graceful error handling, automatic key normalization, and file persistence.
 
 ### Architectural Principles
 
 **Simplified Inheritance Hierarchy:**
 - Single inheritance chain: `PyHydrate` → `NotationBase`
 - All notation classes inherit directly from `NotationBase`
+- `NotationProxy` is a standalone class (no inheritance from `NotationBase`)
 - No circular inheritance or complex dependency chains
 
 **Dependency Management:**
@@ -183,28 +187,43 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 - Forward references using string literals
 
 **Clean Separation of Concerns:**
-- `NotationBase`: Core functionality (magic methods, output formatting, key normalization)
-- `NotationObject`: Dictionary/object handling with lazy loading
-- `NotationArray`: List/array handling with lazy loading  
+- `NotationBase`: Core functionality (magic methods, output formatting, key normalization, `_unwrap`, `_create_child`)
+- `NotationObject`: Dictionary/object handling with lazy loading, mutation (`__setattr__`, `__delattr__`)
+- `NotationArray`: List/array handling with lazy loading, mutation (`__setitem__`, `__delitem__`)
 - `NotationPrimitive`: Primitive value handling
-- `PyHydrate`: Main entry point and orchestration
+- `NotationProxy`: Lightweight proxy for deferred deep auto-creation of missing keys
+- `PyHydrate`: Main entry point, orchestration, file I/O (`save`)
 
 **Memory Efficiency Architecture:**
 - Lazy loading for all nested structures (`NotationObject` and `NotationArray`)
 - Memory-optimized `__slots__` in all notation classes
 - On-demand computation of cleaned values via `@property`
 - Smart caching with pre-computed key mappings
-- Factory pattern for child object creation
+- Factory pattern for child object creation with parent tracking
+
+**Write (Mutation) Architecture:**
+- `__setattr__` on `NotationObject` and `PyHydrate` with internal attrs guard (`_INTERNAL_ATTRS` frozenset)
+- Writes mutate `_raw_value` directly (single source of truth); `_cleaned_value` auto-reflects changes
+- Key preservation: writing to a normalized key (e.g., `first_name`) updates the original-format key (e.g., `firstName`)
+- `NotationProxy` enables deep auto-creation: `x.a.b.c = 1` creates intermediate dicts via proxy chain materialization
+- Parent tracking (`_parent`, `_parent_key` slots) enables upward propagation from proxy to root
+- Cache invalidation on write: only the specific key's `_hydrated_cache` entry is cleared
 
 ### Core Components
 
 **Main Entry Point:**
-- `pyhydrate/pyhydrate.py` - The `PyHydrate` class that serves as the main entry point, inheriting directly from `NotationBase`
+- `pyhydrate/pyhydrate.py` - The `PyHydrate` class that serves as the main entry point, inheriting directly from `NotationBase`. Supports `save(path, output_format=, original_keys=)` for file persistence (local and cloud storage via `fsspec`) and auto-promotes to `NotationObject` on first write when constructed empty.
+
+**Type Stubs (PEP 561):**
+- `pyhydrate/pyhydrate.pyi` - Type stub declaring `__getattr__` returning `Any` so IDEs (PyCharm, VS Code) recognize dynamic dot notation access without flagging `__slots__` or unresolved attribute warnings.
+- `pyhydrate/py.typed` - PEP 561 marker file signaling the package ships inline type information.
+- Both files are included in the built package via `[tool.setuptools.package-data]` in `pyproject.toml`.
 
 **Notation System Architecture:**
-- `pyhydrate/notation/notation_base.py` - Unified base class providing all shared functionality including debug printing, key casting (camelCase/kebab-case to snake_case), common magic methods, and representation formatting
+- `pyhydrate/notation/notation_base.py` - Unified base class providing all shared functionality including debug printing, key casting (camelCase/kebab-case to snake_case), common magic methods, representation formatting, `_unwrap()` static method, and `_create_child()` factory with parent tracking
 - `pyhydrate/notation/notation_primitive.py` - Handles primitive values (str, int, float, bool, None)
-- `pyhydrate/notation/notation_structures.py` - Contains `NotationObject` (dict wrapper) and `NotationArray` (list wrapper) classes
+- `pyhydrate/notation/notation_proxy.py` - Lightweight proxy for deep auto-creation of missing keys; records parent chain and materializes intermediate dicts on `__setattr__`
+- `pyhydrate/notation/notation_structures.py` - Contains `NotationObject` (dict wrapper with `__setattr__`/`__delattr__`) and `NotationArray` (list wrapper with `__setitem__`/`__delitem__`) classes
 - `pyhydrate/notation/notation_dumper.py` - Custom YAML dumper for consistent output formatting
 - `pyhydrate/types.py` - Centralized type definitions to avoid circular import dependencies
 
@@ -230,10 +249,28 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 - Uses regex pattern matching for consistent key transformation
 - Maintains mapping between original and cleaned keys
 
-**Dot Notation Access:**
+**Dot Notation Access (Read):**
 - `__getattr__` enables `obj.key` access
 - `__getitem__` enables `obj[index]` access for arrays
-- Graceful handling of missing keys/indices (returns None-type primitive)
+- Missing keys return `NotationProxy` (behaves like None for reads, supports writes)
+
+**Dot Notation Mutation (Write):**
+- `__setattr__` on `NotationObject`/`PyHydrate` for `obj.key = value`
+- `__setitem__` on `NotationArray`/`PyHydrate` for `obj[index] = value`
+- `__delattr__` on `NotationObject`/`PyHydrate` for `del obj.key`
+- `__delitem__` on `NotationArray`/`PyHydrate` for `del obj[index]`
+- Deep auto-creation via `NotationProxy` chain: `x.a.b.c = 1`
+- Auto-promotion from primitive to `NotationObject` on first write
+
+**File Persistence:**
+- `save(path=None, *, output_format=None, original_keys=False)` on `PyHydrate`
+- Format detected from file extension (`.json`, `.yaml`, `.yml`, `.toml`)
+- Explicit `output_format` parameter overrides extension detection
+- `_source_path` stored from constructor's `path=` parameter; `save()` with no args writes back
+- Cloud storage support via `fsspec`: S3 (`s3://`), GCS (`gs://`, `gcs://`), ADLS (`abfs://`, `abfss://`, `az://`)
+- Remote path detection via `_is_remote_path()` and `_REMOTE_SCHEMES` frozenset
+- `_write_remote()` lazy-imports `fsspec` and writes via `fsspec.open()`; raises `ImportError` with install hint if missing
+- Optional extras in `pyproject.toml`: `s3`, `azure`, `gcs`, `cloud`
 
 **Output Formats:**
 - Call with no args or 'value': returns cleaned value
@@ -241,7 +278,7 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 - Call with 'type': returns Python type
 - Call with 'json'/'yaml'/'toml': returns formatted string
 - Call with 'depth': returns recursion depth
-- Call with 'map': returns key mapping (when implemented)
+- Call with 'map': returns key mapping
 
 **Standardized Error Handling:**
 - Custom warning classes for different error types (type conversion, access patterns, API usage)
@@ -260,9 +297,12 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 2. Raw value stored → Key mappings pre-computed (snake_case normalization)
 3. **Lazy hydration**: Child objects created only on first access
 4. Access via dot notation triggers `__getattr__` → cache lookup or lazy creation
-5. **Smart caching**: Subsequent access returns cached objects
-6. Cleaned values computed on-demand via `@property` when requested
-7. Terminal access returns wrapped primitive or structure
+5. Missing keys → `NotationProxy` returned (not cached; supports write-through)
+6. **Smart caching**: Subsequent access of existing keys returns cached objects
+7. Cleaned values computed on-demand via `@property` when requested
+8. Terminal access returns wrapped primitive or structure
+9. **Writes**: `__setattr__` mutates `_raw_value` directly, invalidates cache entry
+10. **Deep writes**: Proxy chain materializes intermediate dicts and delegates to root parent
 
 **Memory Benefits:**
 - ~67% memory reduction (eliminates eager hydration of all children)
@@ -281,6 +321,9 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 - `tests/initialization_tests.py` - Comprehensive initialization tests for all supported input types (primitives, dicts, lists, JSON, YAML, TOML)
 - `tests/array_edge_cases_tests.py` - Array edge cases, bounds checking, and error handling
 - `tests/repr_method_tests.py` - `__repr__` method functionality and warning prevention
+- `tests/write_tests.py` - Write (mutation) support: setting existing/new keys, deep auto-creation, creating from scratch, array mutation, deletion, key normalization on write, serialization after mutation
+- `tests/save_tests.py` - File save/write functionality: saving to JSON/YAML/TOML, round-trip, source path save-back, format override
+- `tests/cloud_save_tests.py` - Cloud storage save functionality: remote path detection, format detection from remote URIs, mocked fsspec integration, ImportError handling, local path isolation
 - Test data located in `pyhydrate/data/` as JSON, YAML, and TOML files
 
 **Test Discovery:** All test files follow the `*_tests.py` naming pattern and are automatically discovered by the CI system.
@@ -291,20 +334,20 @@ PyHydrate is a Python library that enables dot notation access to nested data st
 This codebase follows modern Python development practices:
 
 **Linting and Formatting:**
-- Uses `ruff` for both linting and formatting (configured in `ruff.toml`)
+- Uses `ruff` for both linting and formatting (configured in `pyproject.toml` under `[tool.ruff]`)
 - Code is automatically formatted for consistency
-- **All linting issues resolved**: Reduced from 45+ errors to 0 remaining issues
+- **All linting issues resolved**: Zero remaining lint errors
 - All functions have proper type annotations including `*args`, `**kwargs`, and return types
 - Modern Python patterns: uses `pathlib.Path.read_text()`, keyword-only parameters, and proper type comparisons
 
 **Testing Standards:**
-- Comprehensive test coverage with 147 tests across 11 test files
+- Comprehensive test coverage with 239 tests across 14 test files
 - Uses unittest framework with modern `assert` statements
 - All tests pass after linting and formatting improvements
 - Test data is organized in dedicated `pyhydrate/data/` directory
 - Uses `pathlib.Path.read_text()` for file operations in tests
 - Automated test discovery in CI ensures all new test files are included automatically
-- Memory efficiency tests validate lazy loading behavior without accessing private members
+- Memory efficiency tests validate lazy loading behavior
 - Initialization tests validate all supported input formats including TOML
 
 **Import Organization:**
@@ -341,18 +384,23 @@ This codebase follows modern Python development practices:
 - Magic methods (`__int__`, `__float__`, `__bool__`) enable natural type conversion with proper error handling
 - Debug mode provides detailed traversal logging for troubleshooting
 - The `_cast_key` method handles automatic key normalization (camelCase → snake_case)
-- Error handling uses a mix of warnings and graceful failures (returns None primitives)
+- Error handling uses a mix of warnings and graceful failures (returns proxy for missing keys)
 - Type annotations are comprehensive including Union types, Any for dynamic parameters, and ClassVar for class attributes
 - Uses modern Python patterns: keyword-only parameters, `is` for type comparisons, pathlib for file operations
 - Simplified inheritance hierarchy: all classes inherit directly from `NotationBase` (no circular inheritance)
+- `NotationProxy` is a standalone class (not inheriting from `NotationBase`) for minimal overhead
 - Lazy imports prevent circular dependencies between notation classes
 - Centralized type system in `types.py` for clean dependency management
+- `__setattr__` uses `_INTERNAL_ATTRS` frozenset guard to distinguish slot writes from data writes
+- Writes go to `_raw_value` directly; `_cleaned_value` is computed on demand so it auto-reflects changes
+- `NotationProxy` is never cached in `_hydrated_cache` to ensure post-materialization access creates proper objects
 
 ### Known Issues & Limitations
 - TODO comments indicate areas for future enhancement
 
 ### Recently Completed Features
-- ✅ **TOML Callable Argument Support**: Added 'toml' as a callable argument option with comprehensive serialization support, error handling, and 6 new tests covering all TOML functionality scenarios
+- ✅ **Write (Mutation) Support**: Full dot-notation write support with `__setattr__`/`__setitem__`/`__delattr__`/`__delitem__`, deep auto-creation via `NotationProxy` chain, auto-promotion from empty to dict, and file persistence via `save()` method
+- ✅ **TOML Callable Argument Support**: Added 'toml' as a callable argument option with comprehensive serialization support, error handling, and tests
 - ✅ **Standardized Error Handling (Issue #28)**: Implemented comprehensive error handling strategy with custom warning classes, structured logging, and consistent error patterns across the entire codebase
 - ✅ **Error Handling for Invalid Call Types (Issue #25)**: Implemented proper warning system for invalid call types with comprehensive tests and updated documentation
 - ✅ **Memory Efficiency (Issue #30)**: Implemented lazy loading architecture with ~67% memory reduction, `__slots__` optimization, and smart caching
@@ -361,6 +409,8 @@ This codebase follows modern Python development practices:
 - ✅ **Code Quality**: All linting issues resolved, code formatting standardized
 - ✅ **CI Enhancement**: Added automated linting and formatting checks to GitHub Actions workflows
 - ✅ **Documentation**: Added comprehensive Mermaid diagrams showing class hierarchy, data flow, and dependency management
+- ✅ **PEP 561 Type Stubs**: Added `py.typed` marker and `pyhydrate.pyi` stub to resolve PyCharm/IDE `__slots__` and unresolved attribute inspections for dynamic dot notation access
+- ✅ **Cloud Storage Save**: `save()` supports remote URIs (`s3://`, `gs://`, `abfss://`) via `fsspec` with optional extras (`pip install pyhydrate[cloud]`). Lazy-imports fsspec to keep the core dependency-free.
 
 ### Continuous Integration
 The project uses GitHub Actions for automated testing:
@@ -379,10 +429,10 @@ The project uses GitHub Actions for automated testing:
 - CI uses `python -m unittest discover -s tests/ -p "*_tests.py"` for automatic test file detection
 - New test files following the `*_tests.py` pattern are automatically included
 - No need to manually update CI configuration when adding new test files
-- Runs all 147 tests across 11 test files on every push
+- Runs all 239 tests across 14 test files on every push
 
 ### Ruff Configuration
-The project uses a comprehensive `ruff.toml` configuration with:
+The project uses a comprehensive ruff configuration in `pyproject.toml` (under `[tool.ruff]`) with:
 - **Target**: Python 3.8+ compatibility
 - **Line length**: 88 characters (Black-compatible)
 - **Enabled rules**: Extensive rule set covering style, imports, security, performance
@@ -391,13 +441,8 @@ The project uses a comprehensive `ruff.toml` configuration with:
   - TODO comments (FIX002) - allowed for development notes
   - unittest.assertRaises (PT027) - project uses unittest, not pytest
   - Magic value comparisons (PLR2004) - allowed in tests
-- **Per-file ignores**: Test files have relaxed rules for magic values and assertions
+- **Per-file ignores**: Test files have relaxed rules for magic values and assertions; library internals have SLF001 (private member access) suppressed for cross-module internal access
 
 Current status: **All linting issues resolved** ✅
 
-Previously resolved technical debt issues:
-- ✅ PYI041: Simplified Union[int, float] to just float in type annotations
-- ✅ FBT001/FBT002: Made boolean parameters keyword-only in YAML dumper
-- ✅ ARG002: Explicitly acknowledged unused parameter with proper documentation
-
-The codebase now passes all ruff checks with zero linting errors.
+The codebase passes all ruff checks with zero linting errors.
